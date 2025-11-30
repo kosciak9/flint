@@ -1,0 +1,9 @@
+# =============================================================================
+# System-wide environment variables for Flint
+# =============================================================================
+
+# Force Qt applications to use Wayland backend
+QT_QPA_PLATFORM=wayland
+
+# Force GTK applications to use XDG portal for file dialogs
+GTK_USE_PORTAL=1

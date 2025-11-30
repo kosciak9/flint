@@ -1,0 +1,21 @@
+# =============================================================================
+# greetd configuration for Flint
+# =============================================================================
+# Uses tuigreet to launch niri session
+# This config is immutable - lives in /usr/share/flint/greetd/
+# =============================================================================
+
+[terminal]
+vt = 1
+
+[default_session]
+# tuigreet options:
+#   --greeting             Custom banner text
+#   --time                 Display date/time
+#   --remember             Remember last username
+#   --remember-session     Remember last selected session
+#   --asterisks            Show asterisks when typing password
+#   --sessions             Wayland session .desktop file locations
+#   --cmd                  Default command if no session selected
+command = "tuigreet --greeting '\n    ███████╗██╗     ██╗███╗   ██╗████████╗\n    ██╔════╝██║     ██║████╗  ██║╚══██╔══╝\n    █████╗  ██║     ██║██╔██╗ ██║   ██║\n    ██╔══╝  ██║     ██║██║╚██╗██║   ██║\n    ██║     ███████╗██║██║ ╚████║   ██║\n    ╚═╝     ╚══════╝╚═╝╚═╝  ╚═══╝   ╚═╝\n' --time --remember --remember-session --asterisks --sessions /usr/share/wayland-sessions --cmd niri-session"
+user = "greetd"
