@@ -251,6 +251,7 @@ RUN --mount=type=cache,target=/var/cache \
     cp -r /tmp/builder-out/lib64/* /usr/lib64/ 2>/dev/null || true && \
     # Copy config files
     cp -r /tmp/files/usr/etc/* /usr/etc/ 2>/dev/null || true && \
+    cp -r /tmp/files/usr/share/* /usr/share/ 2>/dev/null || true && \
     # Enable greetd via systemd preset (systemctl enable doesn't work at build time)
     mkdir -p /usr/lib/systemd/system-preset && \
     echo "enable greetd.service" > /usr/lib/systemd/system-preset/50-flint.preset && \
