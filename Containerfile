@@ -233,6 +233,8 @@ RUN --mount=type=cache,target=/var/cache \
         libxkbcommon \
         # Wluma runtime
         vulkan-loader libdrm libv4l \
+        # GPG/Keyring integration (pinentry-gnome3 stores passphrases in gnome-keyring)
+        pinentry-gnome3 \
         # Fonts
         overpass-fonts \
     && \
@@ -249,6 +251,9 @@ RUN --mount=type=cache,target=/var/cache \
     # Copy cmark-gfm libraries (built from source)
     cp -r /tmp/builder-out/usr/lib64/* /usr/lib64/ 2>/dev/null || true && \
     cp -r /tmp/builder-out/lib64/* /usr/lib64/ 2>/dev/null || true && \
+    # Copy systemd user services (e.g., vicinae.service)
+    mkdir -p /usr/lib/systemd/user && \
+    cp -r /tmp/builder-out/usr/lib/systemd/user/* /usr/lib/systemd/user/ 2>/dev/null || true && \
     # Copy config files
     cp -r /tmp/files/usr/etc/* /usr/etc/ 2>/dev/null || true && \
     cp -r /tmp/files/usr/share/* /usr/share/ 2>/dev/null || true && \
