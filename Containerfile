@@ -210,7 +210,7 @@ RUN --mount=type=cache,target=/var/cache \
         # Login manager
         greetd tuigreet \
         # Fingerprint auth
-        fprintd libfprint \
+        fprintd fprintd-pam libfprint \
         # XDG Desktop Portals (needed for Flatpak file pickers, screen sharing, etc.)
         xdg-desktop-portal xdg-desktop-portal-gtk xdg-desktop-portal-gnome \
         # Session utilities
