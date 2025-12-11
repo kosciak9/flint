@@ -209,6 +209,8 @@ RUN --mount=type=cache,target=/var/cache \
         ghostty \
         # Login manager
         greetd tuigreet \
+        # D-Bus tools (dbus-update-activation-environment for niri session)
+        dbus-tools \
         # Fingerprint auth
         fprintd fprintd-pam libfprint \
         # XDG Desktop Portals (needed for Flatpak file pickers, screen sharing, etc.)
