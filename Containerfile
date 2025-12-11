@@ -233,8 +233,11 @@ RUN --mount=type=cache,target=/var/cache \
         libxkbcommon \
         # Wluma runtime
         vulkan-loader libdrm libv4l \
-        # GPG/Keyring integration (pinentry-gnome3 stores passphrases in gnome-keyring)
-        pinentry-gnome3 \
+        # GPG/Keyring integration
+        # gnome-keyring is required for the Secret portal (Flatpak apps storing credentials)
+        gnome-keyring pinentry-gnome3 \
+        # File manager - also used by xdg-desktop-portal-gnome for file picker dialogs
+        nautilus \
         # Fonts
         overpass-fonts \
     && \
