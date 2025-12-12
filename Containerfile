@@ -48,6 +48,8 @@ RUN --mount=type=cache,target=/root/.cargo/registry \
     --mount=type=cache,target=/root/.cargo/git \
     git clone --depth 1 https://github.com/elkowar/eww.git && \
     cd eww && \
+    # Apply HiDPI image rendering fix (PR #1239), excluding CHANGELOG to avoid conflicts
+    curl -fsSL https://github.com/elkowar/eww/pull/1239.diff | git apply --exclude=CHANGELOG.md && \
     cargo build --release --no-default-features --features=wayland && \
     install -Dm755 target/release/eww /build/out/bin/eww && \
     rm -rf /build/src/eww
