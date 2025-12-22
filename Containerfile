@@ -80,24 +80,6 @@ RUN --mount=type=cache,target=/root/.cargo/registry \
     rm -rf /build/src/end-rs
 
 # -----------------------------------------------------------------------------
-# Build wluma (Adaptive brightness)
-# -----------------------------------------------------------------------------
-RUN --mount=type=cache,target=/var/cache/dnf \
-    dnf install -y \
-    clang clang-devel llvm-devel \
-    vulkan-devel libdrm-devel libv4l-devel \
-    && dnf clean all
-
-ARG WLUMA_VERSION=4.10.0
-RUN --mount=type=cache,target=/root/.cargo/registry \
-    --mount=type=cache,target=/root/.cargo/git \
-    git clone --depth 1 https://github.com/maximbaz/wluma.git && \
-    cd wluma && \
-    WLUMA_VERSION=${WLUMA_VERSION} cargo build --release && \
-    install -Dm755 target/release/wluma /build/out/bin/wluma && \
-    rm -rf /build/src/wluma
-
-# -----------------------------------------------------------------------------
 # Build cmark-gfm (GitHub Flavored Markdown - needed by Vicinae)
 # Install system-wide so vicinae can find headers, then copy libs to output
 # -----------------------------------------------------------------------------
@@ -235,8 +217,6 @@ RUN --mount=type=cache,target=/var/cache \
         layer-shell-qt abseil-cpp libqalculate protobuf minizip \
         # Swaylock-effects runtime
         libxkbcommon \
-        # Wluma runtime
-        vulkan-loader libdrm libv4l \
         # GPG/Keyring integration
         # gnome-keyring is required for the Secret portal (Flatpak apps storing credentials)
         gnome-keyring pinentry-gnome3 \
