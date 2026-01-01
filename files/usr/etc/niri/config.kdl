@@ -41,7 +41,7 @@ layout {
 
 // Startup applications
 spawn-at-startup "swaybg" "-m" "fill" "-i" "/usr/share/backgrounds/default.png"
-spawn-at-startup "swayidle" "-w"
+spawn-at-startup "hypridle"
 spawn-at-startup "wlsunset" "-l" "52.2" "-L" "21.0"
 
 // Environment variables
@@ -98,7 +98,7 @@ binds {
     Mod+BracketRight { expel-window-from-column; }
     
     // Screen lock
-    Mod+Escape { spawn "swaylock" "--screenshots" "--clock" "--effect-blur" "7x5"; }
+    Mod+Escape { spawn "hyprlock"; }
     
     // Media keys
     XF86AudioRaiseVolume { spawn "wpctl" "set-volume" "@DEFAULT_AUDIO_SINK@" "5%+"; }

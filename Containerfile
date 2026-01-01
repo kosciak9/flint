@@ -129,23 +129,6 @@ RUN git clone --depth 1 https://github.com/vicinaehq/vicinae.git && \
     rm -rf /build/src/vicinae
 
 # -----------------------------------------------------------------------------
-# Build swaylock-effects
-# -----------------------------------------------------------------------------
-RUN --mount=type=cache,target=/var/cache/dnf \
-    dnf install -y \
-    meson \
-    wayland-devel wayland-protocols-devel libxkbcommon-devel \
-    cairo-devel gdk-pixbuf2-devel pam-devel scdoc \
-    && dnf clean all
-
-RUN git clone --depth 1 https://github.com/jirutka/swaylock-effects.git && \
-    cd swaylock-effects && \
-    meson setup build --prefix=/usr && \
-    ninja -C build && \
-    DESTDIR=/build/out ninja -C build install && \
-    rm -rf /build/src/swaylock-effects
-
-# -----------------------------------------------------------------------------
 # Build starship (cross-shell prompt)
 # -----------------------------------------------------------------------------
 # Uses rust/cargo already installed for eww
@@ -176,11 +159,13 @@ ARG FEDORA_VERSION=43
 COPY --from=ctx /files/ /tmp/files/
 COPY --from=ctx /scripts/ /tmp/scripts/
 
-# Enable COPRs (niri + ghostty)
+# Enable COPRs (niri + ghostty) and Terra (hyprlock/hypridle)
 RUN curl -fsSL "https://copr.fedorainfracloud.org/coprs/yalter/niri/repo/fedora-${FEDORA_VERSION}/yalter-niri-fedora-${FEDORA_VERSION}.repo" \
     -o /etc/yum.repos.d/yalter-niri.repo && \
     curl -fsSL "https://copr.fedorainfracloud.org/coprs/scottames/ghostty/repo/fedora-${FEDORA_VERSION}/scottames-ghostty-fedora-${FEDORA_VERSION}.repo" \
-    -o /etc/yum.repos.d/scottames-ghostty.repo
+    -o /etc/yum.repos.d/scottames-ghostty.repo && \
+    curl -fsSL "https://terra.fyralabs.com/terra.repo" \
+    -o /etc/yum.repos.d/terra.repo
 
 # Install packages and configure system
 RUN --mount=type=cache,target=/var/cache \
@@ -199,8 +184,8 @@ RUN --mount=type=cache,target=/var/cache \
         fprintd fprintd-pam libfprint \
         # XDG Desktop Portals (needed for Flatpak file pickers, screen sharing, etc.)
         xdg-desktop-portal xdg-desktop-portal-gtk xdg-desktop-portal-gnome \
-        # Session utilities
-        swaybg swayidle wlsunset brightnessctl wl-clipboard \
+        # Session utilities (hypridle/hyprlock from Terra for latest versions)
+        swaybg hypridle hyprlock wlsunset brightnessctl wl-clipboard \
         # Shell & CLI tools
         zsh zoxide fzf bat btop neovim trash-cli pass \
         # Git (core only)
@@ -215,8 +200,7 @@ RUN --mount=type=cache,target=/var/cache \
         # Vicinae runtime
         qt6-qtbase qt6-qtsvg qt6-qt5compat qt6-qtwayland qtkeychain-qt6 nodejs \
         layer-shell-qt abseil-cpp libqalculate protobuf minizip \
-        # Swaylock-effects runtime
-        libxkbcommon \
+
         # GPG/Keyring integration
         # gnome-keyring is required for the Secret portal (Flatpak apps storing credentials)
         gnome-keyring pinentry-gnome3 \

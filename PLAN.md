@@ -47,8 +47,8 @@ BlueBuild-based custom Fedora Atomic image with niri as the window manager.
 | Package | Source | Notes |
 |---------|--------|-------|
 | `swaybg` | Fedora repos | Wallpaper |
-| `swayidle` | Fedora repos | Idle management |
-| `swaylock-effects` | **Build from source** | Screen locker with blur/effects |
+| `hypridle` | Terra repo | Idle management (lock, screen off, suspend) |
+| `hyprlock` | Terra repo | GPU-accelerated screen locker with blur, fingerprint |
 | `wlsunset` | Fedora repos | Blue light filter |
 | `wluma` | Build from source | Adaptive brightness (Rust) |
 | `brightnessctl` | Fedora repos | Backlight control |
@@ -263,47 +263,7 @@ cp -r zig-out/share/* /usr/share/
 
 ---
 
-### Swaylock-effects
-
-**Repo:** <https://github.com/jirutka/swaylock-effects>
-
-Fork of swaylock with screenshot blur, clock, effects.
-
-**Dependencies (Fedora):**
-
-```
-meson ninja-build gcc wayland-devel wayland-protocols-devel 
-libxkbcommon-devel cairo-devel gdk-pixbuf2-devel pam-devel scdoc
-```
-
-**Build steps:**
-
-```bash
-git clone https://github.com/jirutka/swaylock-effects.git
-cd swaylock-effects
-meson build
-ninja -C build
-sudo ninja -C build install
-```
-
-**Example usage:**
-
-```bash
-swaylock \
-  --screenshots \
-  --clock \
-  --indicator \
-  --indicator-radius 100 \
-  --effect-blur 7x5 \
-  --effect-vignette 0.5:0.5 \
-  --fade-in 0.2
-```
-
-**Config:** `~/.config/swaylock/config`
-
----
-
-## COPRs to Enable
+## COPRs and Repos to Enable
 
 ```yaml
 # In BlueBuild recipe.yml
@@ -311,6 +271,11 @@ modules:
   - type: copr
     repos:
       - yalter/niri  # official - maintained by niri author
+```
+
+**Terra repo** (for hyprlock/hypridle with latest Hyprland ecosystem deps):
+```bash
+curl -fsSL "https://terra.fyralabs.com/terra.repo" -o /etc/yum.repos.d/terra.repo
 ```
 
 ---
@@ -321,6 +286,8 @@ Place in `files/usr/etc/` (copied to `/etc/` on boot):
 
 - `/etc/greetd/config.toml` — greetd config pointing to tuigreet + niri
 - `/etc/niri/config.kdl` — System-wide niri defaults
+- `/etc/hypr/hypridle.conf` — Idle management (5m lock, 10m screen off, 30m suspend)
+- `/etc/hypr/hyprlock.conf` — Lock screen (blur, clock, fingerprint)
 - `/etc/xdg/eww/` — EWW widgets and config
 
 ---
