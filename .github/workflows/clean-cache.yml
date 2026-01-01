@@ -1,0 +1,34 @@
+# =============================================================================
+# Clean Build Cache
+# =============================================================================
+# Manually triggered workflow to clear all GitHub Actions caches.
+# Use this when builds are using stale cached layers.
+# =============================================================================
+
+name: Clean Build Cache
+
+on:
+  workflow_dispatch:
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+    steps:
+      - name: Clear all GHA caches
+        run: |
+          gh extension install actions/gh-actions-cache
+          
+          echo "Fetching list of cache keys..."
+          cacheKeys=$(gh actions-cache list -R ${{ github.repository }} | cut -f 1)
+          
+          echo "Deleting caches..."
+          for key in $cacheKeys; do
+            echo "Deleting cache: $key"
+            gh actions-cache delete "$key" -R ${{ github.repository }} --confirm || true
+          done
+          
+          echo "Cache cleanup complete."
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
