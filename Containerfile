@@ -35,49 +35,71 @@ RUN --mount=type=cache,target=/var/cache/dnf \
     && dnf clean all
 
 # -----------------------------------------------------------------------------
-# Build EWW (Elkowar's Wacky Widgets)
+# Build Astal libraries (required by AGS)
+# Using PR #70 branch for native niri support
+# Dependencies: astal-io -> astal3/astal4 -> notifd/niri
 # -----------------------------------------------------------------------------
 RUN --mount=type=cache,target=/var/cache/dnf \
     dnf install -y \
-    rust cargo \
-    gtk3-devel gtk-layer-shell-devel pango-devel gdk-pixbuf2-devel \
-    libdbusmenu-gtk3-devel cairo-devel glib2-devel \
+    meson vala valadoc gobject-introspection-devel wayland-protocols-devel \
+    gtk3-devel gtk-layer-shell-devel \
+    gtk4-devel gtk4-layer-shell-devel \
+    json-glib-devel libsoup3-devel \
+    gdk-pixbuf2-devel \
     && dnf clean all
 
-RUN --mount=type=cache,target=/root/.cargo/registry \
-    --mount=type=cache,target=/root/.cargo/git \
-    git clone --depth 1 https://github.com/elkowar/eww.git && \
-    cd eww && \
-    # Apply HiDPI image rendering fix (PR #1239), excluding CHANGELOG to avoid conflicts
-    curl -fsSL https://github.com/elkowar/eww/pull/1239.diff | git apply --exclude=CHANGELOG.md && \
-    cargo build --release --no-default-features --features=wayland && \
-    install -Dm755 target/release/eww /build/out/bin/eww && \
-    rm -rf /build/src/eww
+# Clone astal from PR #70 branch (feat/niri) for native niri IPC support
+RUN git clone --depth 1 --branch feat/niri https://github.com/sameoldlab/astal.git
+
+# Build astal-io (base I/O library)
+RUN cd astal/lib/astal/io && \
+    meson setup build --prefix=/usr && \
+    meson install -C build && \
+    DESTDIR=/build/out meson install -C build && \
+    ldconfig
+
+# Build astal3 (GTK3 widgets)
+RUN cd astal/lib/astal/gtk3 && \
+    meson setup build --prefix=/usr && \
+    meson install -C build && \
+    DESTDIR=/build/out meson install -C build && \
+    ldconfig
+
+# Build astal4 (GTK4 widgets)
+RUN cd astal/lib/astal/gtk4 && \
+    meson setup build --prefix=/usr && \
+    meson install -C build && \
+    DESTDIR=/build/out meson install -C build && \
+    ldconfig
+
+# Build astal-notifd (notification daemon)
+RUN cd astal/lib/notifd && \
+    meson setup build --prefix=/usr && \
+    meson install -C build && \
+    DESTDIR=/build/out meson install -C build && \
+    ldconfig
+
+# Build astal-niri (niri IPC - from PR #70)
+RUN cd astal/lib/niri && \
+    meson setup build --prefix=/usr && \
+    meson install -C build && \
+    DESTDIR=/build/out meson install -C build && \
+    ldconfig && \
+    rm -rf /build/src/astal
 
 # -----------------------------------------------------------------------------
-# Build eww-niri-workspaces
-# -----------------------------------------------------------------------------
-RUN --mount=type=cache,target=/root/.cargo/registry \
-    --mount=type=cache,target=/root/.cargo/git \
-    git clone --depth 1 https://github.com/druskus20/eww-niri-workspaces.git && \
-    cd eww-niri-workspaces && \
-    cargo build --release && \
-    install -Dm755 target/release/eww-niri-workspaces /build/out/bin/eww-niri-workspaces && \
-    rm -rf /build/src/eww-niri-workspaces
-
-# -----------------------------------------------------------------------------
-# Build end-rs (EWW Notification Daemon)
+# Build AGS (Aylur's GTK Shell)
 # -----------------------------------------------------------------------------
 RUN --mount=type=cache,target=/var/cache/dnf \
-    dnf install -y dbus-devel && dnf clean all
+    dnf install -y npm golang gjs && dnf clean all
 
-RUN --mount=type=cache,target=/root/.cargo/registry \
-    --mount=type=cache,target=/root/.cargo/git \
-    git clone --depth 1 https://github.com/Dr-42/end-rs.git && \
-    cd end-rs && \
-    cargo build --release && \
-    install -Dm755 target/release/end-rs /build/out/bin/end-rs && \
-    rm -rf /build/src/end-rs
+RUN git clone --depth 1 https://github.com/aylur/ags.git && \
+    cd ags && \
+    npm install && \
+    meson setup build --prefix=/usr && \
+    meson install -C build && \
+    DESTDIR=/build/out meson install -C build && \
+    rm -rf /build/src/ags
 
 # -----------------------------------------------------------------------------
 # Build cmark-gfm (GitHub Flavored Markdown - needed by Vicinae)
@@ -131,7 +153,9 @@ RUN git clone --depth 1 https://github.com/vicinaehq/vicinae.git && \
 # -----------------------------------------------------------------------------
 # Build starship (cross-shell prompt)
 # -----------------------------------------------------------------------------
-# Uses rust/cargo already installed for eww
+RUN --mount=type=cache,target=/var/cache/dnf \
+    dnf install -y rust cargo && dnf clean all
+
 RUN --mount=type=cache,target=/root/.cargo/registry \
     --mount=type=cache,target=/root/.cargo/git \
     git clone --depth 1 https://github.com/starship/starship.git && \
@@ -279,8 +303,8 @@ RUN --mount=type=cache,target=/var/cache \
         # Networking
         tailscale syncthing \
         # Runtime deps for source-built packages
-        # EWW runtime
-        gtk3 gtk-layer-shell pango gdk-pixbuf2 libdbusmenu-gtk3 cairo glib2 \
+        # AGS runtime (GTK4 + layer shell)
+        gtk4 gtk4-layer-shell gtk3 gtk-layer-shell gjs \
         # Vicinae runtime
         qt6-qtbase qt6-qtsvg qt6-qt5compat qt6-qtwayland qtkeychain-qt6 nodejs \
         layer-shell-qt abseil-cpp libqalculate protobuf minizip \
@@ -295,8 +319,8 @@ RUN --mount=type=cache,target=/var/cache \
     && \
     # Remove unwanted packages from base image
     # - toolbox: we use distrobox only
-    # - waybar: we use eww instead (pulled in as niri weak dep)
-    # - mako: we use end-rs (EWW notification daemon) instead
+    # - waybar: we use AGS instead (pulled in as niri weak dep)
+    # - mako: we use AGS for notifications instead
     rpm-ostree override remove toolbox waybar mako && \
     # Copy built binaries from builder stage
     cp -r /tmp/builder-out/usr/bin/* /usr/bin/ 2>/dev/null || true && \

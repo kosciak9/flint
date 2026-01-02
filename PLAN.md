@@ -26,9 +26,10 @@ BlueBuild-based custom Fedora Atomic image with niri as the window manager.
 
 | Package | Source | Notes |
 |---------|--------|-------|
-| `eww` | **Build from source** | Widgets, bar, OSD (via custom widgets) |
-| `eww-niri-workspaces` | **Build from source** | Feeds niri workspace info to EWW |
-| `end-rs` | **Build from source** | EWW notification daemon |
+| `ags` | **Build from source** | GTK4 shell framework (bar, widgets, notifications) |
+| `astal` | **Build from source** | Backend libraries for AGS (system queries, bindings) |
+| `astal-notifd` | **Build from source** | Notification daemon library (replaces mako/dunst) |
+| `astal-niri` | **Build from source** | Niri IPC bindings (workspaces, windows) - from PR #70 |
 
 ## Launcher
 
@@ -125,84 +126,91 @@ ninja
 # ninja install (or DESTDIR= for packaging)
 ```
 
-### EWW
+### AGS (Aylur's GTK Shell)
 
-**Repo:** <https://github.com/elkowar/eww>
+**Repo:** <https://github.com/aylur/ags>
+
+TypeScript/JSX-based framework for building GTK4 desktop shells. Handles bar, widgets, OSD, and notifications in a React-like syntax.
 
 **Dependencies (Fedora):**
 
 Runtime:
 
 ```
-gtk3 gtk-layer-shell pango gdk-pixbuf2 libdbusmenu-gtk3 cairo glib2
+gtk4 gtk4-layer-shell gtk3 gtk-layer-shell gjs
 ```
 
-Build:
+Build (AGS):
 
 ```
-rust cargo gcc gtk3-devel gtk-layer-shell-devel pango-devel gdk-pixbuf2-devel libdbusmenu-gtk3-devel cairo-devel glib2-devel
+npm meson ninja golang gobject-introspection-devel gtk3-devel gtk-layer-shell-devel gtk4-devel gtk4-layer-shell-devel
 ```
 
-**Build steps:**
-
-```bash
-git clone https://github.com/elkowar/eww.git
-cd eww
-cargo build --release --no-default-features --features=wayland
-install -Dm755 target/release/eww /usr/bin/eww
-```
-
----
-
-### eww-niri-workspaces
-
-**Repo:** <https://github.com/druskus20/eww-niri-workspaces>
-
-Helper that outputs niri workspace info as JSON for EWW consumption.
-
-**Dependencies (Fedora):**
+Build (Astal libraries - required by AGS):
 
 ```
-rust cargo
+meson vala valadoc gobject-introspection-devel wayland-protocols-devel json-glib-devel libsoup3-devel
 ```
 
 **Build steps:**
 
-```bash
-git clone https://github.com/druskus20/eww-niri-workspaces.git
-cd eww-niri-workspaces
-cargo build --release
-install -Dm755 target/release/eww-niri-workspaces /usr/bin/eww-niri-workspaces
-```
-
----
-
-### end-rs (EWW Notification Daemon)
-
-**Repo:** <https://github.com/Dr-42/end-rs>
-
-Notification daemon that renders notifications via EWW widgets.
-
-**Dependencies (Fedora):**
-
-```
-rust cargo dbus-devel
-```
-
-**Build steps:**
+First build Astal libraries (using PR #70 branch for niri support):
 
 ```bash
-git clone https://github.com/Dr-42/end-rs.git
-cd end-rs
-cargo build --release
-install -Dm755 target/release/end-rs /usr/bin/end-rs
+# Clone from PR #70 branch for native niri IPC support
+git clone --branch feat/niri https://github.com/sameoldlab/astal.git
+cd astal
+
+# Build astal-io (base I/O library)
+cd lib/astal/io
+meson setup build --prefix=/usr
+meson install -C build
+
+# Build astal3 (GTK3 widgets)
+cd ../gtk3
+meson setup build --prefix=/usr
+meson install -C build
+
+# Build astal4 (GTK4 widgets)
+cd ../gtk4
+meson setup build --prefix=/usr
+meson install -C build
+
+# Build astal-notifd (notification daemon)
+cd ../../notifd
+meson setup build --prefix=/usr
+meson install -C build
+
+# Build astal-niri (niri IPC bindings)
+cd ../niri
+meson setup build --prefix=/usr
+meson install -C build
+```
+
+Then build AGS:
+
+```bash
+git clone https://github.com/aylur/ags.git
+cd ags
+npm install
+meson setup build --prefix=/usr
+meson install -C build
 ```
 
 **Usage:**
 
-- Autostart daemon: `end-rs daemon`
-- Generate EWW config template: `end-rs generate all`
-- Config at `~/.config/end-rs/config.toml`
+- Initialize project: `ags init -d ~/.config/ags`
+- Run project: `ags run ~/.config/ags/app.tsx`
+- Generate types: `ags types -u -d ~/.config/ags`
+
+**Features:**
+
+- TypeScript/JSX syntax similar to React/Solid
+- Built-in bindings for battery, mpris, network, bluetooth, tray, niri workspaces, etc. via Astal
+- Native notification daemon (astal-notifd) - no need for mako/dunst
+- Native niri IPC (astal-niri) - workspaces, windows, outputs
+- CSS/SCSS styling with GTK4 CSS support
+- Hot reload during development
 
 ---
 
@@ -288,7 +296,7 @@ Place in `files/usr/etc/` (copied to `/etc/` on boot):
 - `/etc/niri/config.kdl` — System-wide niri defaults
 - `/etc/hypr/hypridle.conf` — Idle management (5m lock, 10m screen off, 30m suspend)
 - `/etc/hypr/hyprlock.conf` — Lock screen (blur, clock, fingerprint)
-- `/etc/xdg/eww/` — EWW widgets and config
+- `/etc/xdg/ags/` — AGS shell config (bar, widgets, notifications)
 
 ---
 
@@ -315,10 +323,9 @@ Alternatively, set per-app in a wrapper script or `.desktop` file.
 
 All resolved:
 
-- [x] Ironbar vs EWW? → **EWW** (build from source)
+- [x] Ironbar vs EWW vs AGS? → **AGS** (build from source, TypeScript/JSX, GTK4)
 - [x] Vicinae build dependencies? → Qt6, cmake, ninja, npm
-- [x] EWW build deps? → GTK3 stack + Rust
-- [x] eww-niri-workspaces? → Yes, build from source
+- [x] AGS build deps? → GTK4 stack + Astal libraries + npm/meson
 - [x] git-absorb/git-delta? → Distrobox, not base image
 - [x] wluma? → Build from source
 - [x] openrgb? → Skipped, doesn't work well
@@ -327,77 +334,57 @@ All resolved:
 
 ---
 
-## EWW Volume/Brightness OSD
+## AGS Volume/Brightness OSD
 
-Custom EWW widgets + scripts for OSD. No external daemon needed.
+AGS provides built-in bindings for WirePlumber (audio) and can query brightness directly. No external scripts needed - everything is handled in TypeScript.
 
-### Scripts
+### Example OSD Component (app.tsx)
 
-**~/.local/bin/volume.sh**
+```tsx
+import { Astal } from "ags/gtk4"
+import { createBinding } from "ags/binding"
+import WirePlumber from "gi://AstalWp"
 
-```bash
-#!/bin/bash
-case "$1" in
-  up)   wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%+ ;;
-  down) wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%- ;;
-  mute) wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle ;;
-esac
+function OSD() {
+  const { TOP } = Astal.WindowAnchor
+  const wp = WirePlumber.get_default()
+  const speaker = wp?.audio.defaultSpeaker
 
-VOL=$(wpctl get-volume @DEFAULT_AUDIO_SINK@ | awk '{print int($2*100)}')
-MUTED=$(wpctl get-volume @DEFAULT_AUDIO_SINK@ | grep -q MUTED && echo "true" || echo "false")
+  const volume = createBinding(speaker, "volume")
+  const muted = createBinding(speaker, "mute")
 
-eww update volume_value="$VOL" volume_muted="$MUTED"
-eww open osd --duration 1500ms
+  const icon = () => {
+    if (muted()) return "󰖁"
+    const vol = volume() * 100
+    if (vol > 50) return "󰕾"
+    if (vol > 0) return "󰖀"
+    return "󰕿"
+  }
+
+  return (
+    <window
+      visible={false}
+      name="osd"
+      anchor={TOP}
+      cssClasses={["osd"]}
+    >
+      <box orientation="vertical">
+        <label label={icon} cssClasses={["osd-icon"]} />
+        <slider
+          value={volume}
+          min={0}
+          max={1}
+          cssClasses={["osd-scale"]}
+        />
+      </box>
+    </window>
+  )
+}
 ```
 
-**~/.local/bin/brightness.sh**
+### AGS Style (style.css)
 
-```bash
-#!/bin/bash
-case "$1" in
-  up)   brightnessctl set 5%+ ;;
-  down) brightnessctl set 5%- ;;
-esac
-
-BRIGHT=$(brightnessctl -m | cut -d, -f4 | tr -d '%')
-eww update brightness_value="$BRIGHT"
-eww open osd --duration 1500ms
-```
-
-### EWW Widget (eww.yuck)
-
-```lisp
-(defvar volume_value 50)
-(defvar volume_muted false)
-(defvar brightness_value 50)
-
-(defwidget osd-slider [value icon]
-  (box :class "osd-container" :orientation "v" :space-evenly false
-    (label :class "osd-icon" :text icon)
-    (scale :class "osd-scale"
-           :orientation "h"
-           :min 0 :max 100
-           :value value)))
-
-(defwidget osd []
-  (box :class "osd" :orientation "v" :space-evenly false
-    (osd-slider :value volume_value 
-                :icon {volume_muted ? "󰖁" : 
-                       volume_value > 50 ? "󰕾" : 
-                       volume_value > 0 ? "󰖀" : "󰕿"})
-    (osd-slider :value brightness_value :icon "󰃠")))
-
-(defwindow osd
-  :monitor 0
-  :geometry (geometry :x "0%" :y "80%" :anchor "center")
-  :stacking "overlay"
-  :exclusive false
-  (osd))
-```
-
-### EWW Style (eww.scss)
-
-```scss
+```css
 .osd {
   background: rgba(30, 30, 46, 0.9);
   border-radius: 12px;
@@ -414,33 +401,146 @@ eww open osd --duration 1500ms
 .osd-scale {
   min-width: 180px;
   min-height: 8px;
-  
-  trough {
-    background: #45475a;
-    border-radius: 4px;
-    min-height: 8px;
-  }
-  
-  highlight {
-    background: #89b4fa;
-    border-radius: 4px;
-  }
-  
-  slider { all: unset; }
+}
+
+.osd-scale trough {
+  background: #45475a;
+  border-radius: 4px;
+  min-height: 8px;
+}
+
+.osd-scale highlight {
+  background: #89b4fa;
+  border-radius: 4px;
+}
+
+.osd-scale slider {
+  all: unset;
 }
 ```
 
 ### Niri Keybinds (config.kdl)
 
+AGS can handle media keys directly via Astal bindings, or use `ags request` to trigger OSD:
+
 ```kdl
 binds {
-    XF86AudioRaiseVolume { spawn "~/.local/bin/volume.sh" "up"; }
-    XF86AudioLowerVolume { spawn "~/.local/bin/volume.sh" "down"; }
-    XF86AudioMute { spawn "~/.local/bin/volume.sh" "mute"; }
-    XF86MonBrightnessUp { spawn "~/.local/bin/brightness.sh" "up"; }
-    XF86MonBrightnessDown { spawn "~/.local/bin/brightness.sh" "down"; }
+    XF86AudioRaiseVolume { spawn "wpctl" "set-volume" "@DEFAULT_AUDIO_SINK@" "5%+"; }
+    XF86AudioLowerVolume { spawn "wpctl" "set-volume" "@DEFAULT_AUDIO_SINK@" "5%-"; }
+    XF86AudioMute { spawn "wpctl" "set-mute" "@DEFAULT_AUDIO_SINK@" "toggle"; }
+    XF86MonBrightnessUp { spawn "brightnessctl" "set" "5%+"; }
+    XF86MonBrightnessDown { spawn "brightnessctl" "set" "5%-"; }
 }
 ```
+
+AGS automatically reacts to WirePlumber changes via reactive bindings.
+
+---
+
+## AGS Niri Workspaces
+
+Using `astal-niri` (from PR #70), you get native niri IPC bindings for workspaces, windows, and outputs.
+
+### Example Workspaces Widget
+
+```tsx
+import { Astal } from "ags/gtk4"
+import { createBinding } from "ags/binding"
+import Niri from "gi://AstalNiri"
+
+function Workspaces() {
+  const niri = Niri.get_default()
+  const workspaces = createBinding(niri, "workspaces")
+  const focusedWorkspace = createBinding(niri, "focused-workspace")
+
+  return (
+    <box cssClasses={["workspaces"]}>
+      {workspaces((ws) =>
+        ws.map((workspace) => (
+          <button
+            cssClasses={[
+              "workspace",
+              focusedWorkspace()?.id === workspace.id ? "focused" : "",
+            ]}
+            onClicked={() => niri.focus_workspace(workspace.id)}
+          >
+            <label label={String(workspace.idx)} />
+          </button>
+        ))
+      )}
+    </box>
+  )
+}
+```
+
+### Available Niri Bindings
+
+- `niri.workspaces` - List of all workspaces
+- `niri.focused-workspace` - Currently focused workspace
+- `niri.windows` - List of all windows
+- `niri.focused-window` - Currently focused window
+- `niri.outputs` - List of outputs/monitors
+- `niri.focus_workspace(id)` - Focus a workspace
+- `niri.focus_window(id)` - Focus a window
+
+---
+
+## AGS Notifications
+
+Using `astal-notifd`, AGS acts as its own notification daemon. No need for mako, dunst, or end-rs.
+
+### Example Notification Center
+
+```tsx
+import { Astal } from "ags/gtk4"
+import { createBinding } from "ags/binding"
+import Notifd from "gi://AstalNotifd"
+
+function NotificationPopup() {
+  const notifd = Notifd.get_default()
+  const notifications = createBinding(notifd, "notifications")
+
+  return (
+    <window
+      name="notifications"
+      anchor={Astal.WindowAnchor.TOP | Astal.WindowAnchor.RIGHT}
+      cssClasses={["notification-popup"]}
+    >
+      <box orientation="vertical" spacing={8}>
+        {notifications((notifs) =>
+          notifs.slice(0, 5).map((n) => (
+            <box cssClasses={["notification"]} orientation="vertical">
+              <box cssClasses={["notification-header"]}>
+                <label label={n.app_name} cssClasses={["app-name"]} />
+                <button
+                  cssClasses={["close-btn"]}
+                  onClicked={() => n.dismiss()}
+                >
+                  <label label="×" />
+                </button>
+              </box>
+              <label label={n.summary} cssClasses={["summary"]} />
+              <label label={n.body} cssClasses={["body"]} />
+            </box>
+          ))
+        )}
+      </box>
+    </window>
+  )
+}
+```
+
+### Notification Properties
+
+- `n.app_name` - Application name
+- `n.summary` - Notification title
+- `n.body` - Notification body text
+- `n.app_icon` - Application icon
+- `n.image` - Notification image (if any)
+- `n.urgency` - low, normal, critical
+- `n.actions` - Available actions
+- `n.dismiss()` - Dismiss the notification
+- `n.invoke(action_id)` - Invoke an action
 
 ---
 
@@ -457,7 +557,7 @@ niri-silverblue/
 │       └── etc/
 │           ├── greetd/config.toml
 │           ├── niri/config.kdl
-│           └── xdg/eww/
+│           └── xdg/ags/
 └── .github/
     └── workflows/
         └── build.yml
