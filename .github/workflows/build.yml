@@ -98,4 +98,6 @@ jobs:
           for tag in ${TAGS}; do
             images+="${tag}@${DIGEST} "
           done
-          cosign sign --key env://COSIGN_PRIVATE_KEY --yes ${images}
+          # Use --recursive to sign all platform manifests in the OCI image index
+          # This is required for rpm-ostree signature verification which pulls by platform digest
+          cosign sign --key env://COSIGN_PRIVATE_KEY --recursive --yes ${images}
