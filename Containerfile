@@ -327,9 +327,11 @@ RUN --mount=type=cache,target=/var/cache \
     cp -r /tmp/builder-out/bin/* /usr/bin/ 2>/dev/null || true && \
     cp -r /tmp/builder-out/usr/share/* /usr/share/ 2>/dev/null || true && \
     cp -r /tmp/builder-out/share/* /usr/share/ 2>/dev/null || true && \
-    # Copy cmark-gfm libraries (built from source)
+    # Copy libraries (built from source: astal, cmark-gfm, hypr*)
     cp -r /tmp/builder-out/usr/lib64/* /usr/lib64/ 2>/dev/null || true && \
     cp -r /tmp/builder-out/lib64/* /usr/lib64/ 2>/dev/null || true && \
+    # Recompile GSettings schemas (astal libraries add new schemas)
+    glib-compile-schemas /usr/share/glib-2.0/schemas/ && \
     # Copy systemd user services (e.g., vicinae.service)
     mkdir -p /usr/lib/systemd/user && \
     cp -r /tmp/builder-out/usr/lib/systemd/user/* /usr/lib/systemd/user/ 2>/dev/null || true && \
