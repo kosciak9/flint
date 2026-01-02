@@ -95,6 +95,8 @@ RUN --mount=type=cache,target=/var/cache/dnf \
 
 RUN git clone --depth 1 https://github.com/aylur/ags.git && \
     cd ags && \
+    # Patch: use versioned .so.0 for LD_PRELOAD (unversioned .so is in -devel package)
+    sed -i "s|libgtk4-layer-shell.so'|libgtk4-layer-shell.so.0'|" meson.build && \
     npm install && \
     meson setup build --prefix=/usr && \
     meson install -C build && \
