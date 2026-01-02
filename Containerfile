@@ -333,8 +333,8 @@ RUN --mount=type=cache,target=/var/cache \
     # Copy systemd user services (e.g., vicinae.service)
     mkdir -p /usr/lib/systemd/user && \
     cp -r /tmp/builder-out/usr/lib/systemd/user/* /usr/lib/systemd/user/ 2>/dev/null || true && \
-    # Copy config files
-    cp -r /tmp/files/usr/etc/* /usr/etc/ 2>/dev/null || true && \
+    # Copy config files (to /etc, not /usr/etc - ostree images use /etc directly)
+    cp -r /tmp/files/usr/etc/* /etc/ && \
     cp -r /tmp/files/usr/share/* /usr/share/ 2>/dev/null || true && \
     # Enable greetd via systemd preset (systemctl enable doesn't work at build time)
     mkdir -p /usr/lib/systemd/system-preset && \
