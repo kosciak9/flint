@@ -148,6 +148,90 @@ RUN git clone --depth 1 https://github.com/yadm-dev/yadm.git && \
     install -Dm755 yadm/yadm /build/out/bin/yadm && \
     rm -rf /build/src/yadm
 
+# -----------------------------------------------------------------------------
+# Build Hyprland ecosystem (hypridle + hyprlock)
+# Dependencies: hyprutils -> hyprlang -> hyprgraphics -> hyprwayland-scanner -> hypridle/hyprlock
+# -----------------------------------------------------------------------------
+
+# Install shared build dependencies for hypr* ecosystem
+RUN --mount=type=cache,target=/var/cache/dnf \
+    dnf install -y \
+    cmake \
+    wayland-devel wayland-protocols-devel \
+    cairo-devel pango-devel \
+    libxkbcommon-devel \
+    pam-devel \
+    sdbus-cpp-devel \
+    mesa-libgbm-devel libdrm-devel mesa-libGL-devel mesa-libEGL-devel \
+    pugixml-devel \
+    pixman-devel libjpeg-turbo-devel libwebp-devel libpng-devel \
+    librsvg2-devel file-devel \
+    && dnf clean all
+
+# Build hyprland-protocols (Fedora version is too old)
+RUN git clone --depth 1 https://github.com/hyprwm/hyprland-protocols.git && \
+    cd hyprland-protocols && \
+    cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr -B build && \
+    cmake --build build && \
+    DESTDIR=/build/out cmake --install build && \
+    cmake --install build && \
+    rm -rf /build/src/hyprland-protocols
+
+# Build hyprutils (base library, no hypr deps)
+RUN git clone --depth 1 https://github.com/hyprwm/hyprutils.git && \
+    cd hyprutils && \
+    cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr -B build && \
+    cmake --build build -j$(nproc) && \
+    DESTDIR=/build/out cmake --install build && \
+    cmake --install build && \
+    ldconfig && \
+    rm -rf /build/src/hyprutils
+
+# Build hyprwayland-scanner (code generator, needs pugixml)
+RUN git clone --depth 1 https://github.com/hyprwm/hyprwayland-scanner.git && \
+    cd hyprwayland-scanner && \
+    cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr -B build && \
+    cmake --build build -j$(nproc) && \
+    DESTDIR=/build/out cmake --install build && \
+    cmake --install build && \
+    rm -rf /build/src/hyprwayland-scanner
+
+# Build hyprlang (config language, needs hyprutils)
+RUN git clone --depth 1 https://github.com/hyprwm/hyprlang.git && \
+    cd hyprlang && \
+    cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr -B build && \
+    cmake --build build -j$(nproc) && \
+    DESTDIR=/build/out cmake --install build && \
+    cmake --install build && \
+    ldconfig && \
+    rm -rf /build/src/hyprlang
+
+# Build hyprgraphics (graphics utilities, needs hyprutils)
+RUN git clone --depth 1 https://github.com/hyprwm/hyprgraphics.git && \
+    cd hyprgraphics && \
+    cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr -B build && \
+    cmake --build build -j$(nproc) && \
+    DESTDIR=/build/out cmake --install build && \
+    cmake --install build && \
+    ldconfig && \
+    rm -rf /build/src/hyprgraphics
+
+# Build hypridle (idle daemon)
+RUN git clone --depth 1 https://github.com/hyprwm/hypridle.git && \
+    cd hypridle && \
+    cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr -B build && \
+    cmake --build build -j$(nproc) && \
+    DESTDIR=/build/out cmake --install build && \
+    rm -rf /build/src/hypridle
+
+# Build hyprlock (screen locker)
+RUN git clone --depth 1 https://github.com/hyprwm/hyprlock.git && \
+    cd hyprlock && \
+    cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr -B build && \
+    cmake --build build -j$(nproc) && \
+    DESTDIR=/build/out cmake --install build && \
+    rm -rf /build/src/hyprlock
+
 # =============================================================================
 # Stage 2: Final image
 # =============================================================================
@@ -159,13 +243,11 @@ ARG FEDORA_VERSION=43
 COPY --from=ctx /files/ /tmp/files/
 COPY --from=ctx /scripts/ /tmp/scripts/
 
-# Enable COPRs (niri + ghostty) and Terra (hyprlock/hypridle)
+# Enable COPRs (niri + ghostty)
 RUN curl -fsSL "https://copr.fedorainfracloud.org/coprs/yalter/niri/repo/fedora-${FEDORA_VERSION}/yalter-niri-fedora-${FEDORA_VERSION}.repo" \
     -o /etc/yum.repos.d/yalter-niri.repo && \
     curl -fsSL "https://copr.fedorainfracloud.org/coprs/scottames/ghostty/repo/fedora-${FEDORA_VERSION}/scottames-ghostty-fedora-${FEDORA_VERSION}.repo" \
-    -o /etc/yum.repos.d/scottames-ghostty.repo && \
-    curl -fsSL "https://terra.fyralabs.com/terra.repo" \
-    -o /etc/yum.repos.d/terra.repo
+    -o /etc/yum.repos.d/scottames-ghostty.repo
 
 # Install packages and configure system
 RUN --mount=type=cache,target=/var/cache \
@@ -184,8 +266,10 @@ RUN --mount=type=cache,target=/var/cache \
         fprintd fprintd-pam libfprint \
         # XDG Desktop Portals (needed for Flatpak file pickers, screen sharing, etc.)
         xdg-desktop-portal xdg-desktop-portal-gtk xdg-desktop-portal-gnome \
-        # Session utilities (hypridle/hyprlock from Terra for latest versions)
-        swaybg hypridle hyprlock wlsunset brightnessctl wl-clipboard \
+        # Session utilities (hypridle/hyprlock built from source)
+        swaybg wlsunset brightnessctl wl-clipboard \
+        # Runtime deps for hypridle/hyprlock (built from source)
+        sdbus-cpp \
         # Shell & CLI tools
         zsh zoxide fzf bat btop neovim trash-cli pass \
         # Git (core only)
