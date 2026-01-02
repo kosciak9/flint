@@ -47,7 +47,7 @@ This is my personal daily-driver system with a curated set of software tailored 
 
 - **zsh** + **starship** - Shell and prompt
 - **neovim** - Editor
-- **zoxide**, **fzf**, **bat**, **btop** - Modern CLI utilities
+- **zoxide**, **fzf**, **fd**, **bat**, **btop** - Modern CLI utilities
 - **yadm** - Dotfile management
 - **pass** - Password manager
 - **trash-cli** - Safe file deletion

@@ -37,7 +37,9 @@ RUN --mount=type=cache,target=/var/cache/dnf \
 # -----------------------------------------------------------------------------
 # Build Astal libraries (required by AGS)
 # Using PR #70 branch for native niri support
-# Dependencies: astal-io -> astal3/astal4 -> notifd/niri
+# Dependencies: astal-io -> astal3/astal4 -> feature libs -> notifd/niri
+# Feature libs: wireplumber, tray, battery, network, mpris, bluetooth,
+#               powerprofiles, apps
 # -----------------------------------------------------------------------------
 RUN --mount=type=cache,target=/var/cache/dnf \
     dnf install -y \
@@ -46,7 +48,19 @@ RUN --mount=type=cache,target=/var/cache/dnf \
     gtk4-devel gtk4-layer-shell-devel \
     json-glib-devel libsoup3-devel \
     gdk-pixbuf2-devel \
+    # Additional deps for Astal feature libraries
+    wireplumber-devel \
+    NetworkManager-libnm-devel \
     && dnf clean all
+
+# Build appmenu-glib-translator (required by AstalTray)
+RUN git clone --depth 1 https://github.com/rilian-la-te/vala-panel-appmenu.git && \
+    cd vala-panel-appmenu/subprojects/appmenu-glib-translator && \
+    meson setup build --prefix=/usr && \
+    meson install -C build && \
+    DESTDIR=/build/out meson install -C build && \
+    ldconfig && \
+    rm -rf /build/src/vala-panel-appmenu
 
 # Clone astal from PR #70 branch (feat/niri) for native niri IPC support
 RUN git clone --depth 1 --branch feat/niri https://github.com/sameoldlab/astal.git
@@ -67,6 +81,57 @@ RUN cd astal/lib/astal/gtk3 && \
 
 # Build astal4 (GTK4 widgets)
 RUN cd astal/lib/astal/gtk4 && \
+    meson setup build --prefix=/usr && \
+    meson install -C build && \
+    DESTDIR=/build/out meson install -C build && \
+    ldconfig
+
+# Build Astal feature libraries (wireplumber, tray, battery, network, mpris,
+# bluetooth, powerprofiles, apps)
+# All use DBus or have deps already installed above
+RUN cd astal/lib/wireplumber && \
+    meson setup build --prefix=/usr && \
+    meson install -C build && \
+    DESTDIR=/build/out meson install -C build && \
+    ldconfig
+
+RUN cd astal/lib/tray && \
+    meson setup build --prefix=/usr && \
+    meson install -C build && \
+    DESTDIR=/build/out meson install -C build && \
+    ldconfig
+
+RUN cd astal/lib/battery && \
+    meson setup build --prefix=/usr && \
+    meson install -C build && \
+    DESTDIR=/build/out meson install -C build && \
+    ldconfig
+
+RUN cd astal/lib/network && \
+    meson setup build --prefix=/usr && \
+    meson install -C build && \
+    DESTDIR=/build/out meson install -C build && \
+    ldconfig
+
+RUN cd astal/lib/mpris && \
+    meson setup build --prefix=/usr && \
+    meson install -C build && \
+    DESTDIR=/build/out meson install -C build && \
+    ldconfig
+
+RUN cd astal/lib/bluetooth && \
+    meson setup build --prefix=/usr && \
+    meson install -C build && \
+    DESTDIR=/build/out meson install -C build && \
+    ldconfig
+
+RUN cd astal/lib/powerprofiles && \
+    meson setup build --prefix=/usr && \
+    meson install -C build && \
+    DESTDIR=/build/out meson install -C build && \
+    ldconfig
+
+RUN cd astal/lib/apps && \
     meson setup build --prefix=/usr && \
     meson install -C build && \
     DESTDIR=/build/out meson install -C build && \
@@ -296,8 +361,10 @@ RUN --mount=type=cache,target=/var/cache \
         swaybg wlsunset brightnessctl wl-clipboard \
         # Runtime deps for hypridle/hyprlock (built from source)
         sdbus-cpp \
+        # Runtime deps for Astal feature libraries
+        wireplumber power-profiles-daemon \
         # Shell & CLI tools
-        zsh zoxide fzf bat btop neovim trash-cli pass \
+        zsh zoxide fzf fd-find bat btop neovim trash-cli pass \
         # Git (core only)
         git \
         # Containers
