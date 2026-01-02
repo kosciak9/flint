@@ -57,6 +57,10 @@ This is my personal daily-driver system with a curated set of software tailored 
 - **podman-compose** - Container orchestration
 - **distrobox** - Development containers (from base image)
 
+### Development
+
+- **caddy** - Fast, multi-platform web server for local dev servers
+
 ### Networking
 
 - **tailscale** - VPN mesh

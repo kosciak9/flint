@@ -318,6 +318,8 @@ RUN --mount=type=cache,target=/var/cache \
         nautilus \
         # Fonts
         overpass-fonts \
+        # Development tools
+        caddy \
     && \
     # Remove unwanted packages from base image
     # - toolbox: we use distrobox only
