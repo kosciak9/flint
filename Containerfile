@@ -403,6 +403,20 @@ RUN git clone --depth 1 https://github.com/nullobsi/clight-gui.git && \
     DESTDIR=/build/out cmake --install build && \
     rm -rf /build/src/clight-gui
 
+# -----------------------------------------------------------------------------
+# Build Kanagawa GTK Theme
+# Wave (dark) + Lotus (light) variants, orange accent, macOS window buttons
+# -----------------------------------------------------------------------------
+RUN --mount=type=cache,target=/var/cache/dnf \
+    dnf install -y sassc && dnf clean all
+
+RUN git clone --depth 1 https://github.com/Fausto-Korpsvart/Kanagawa-GKT-Theme.git && \
+    cd Kanagawa-GKT-Theme/themes && \
+    ./install.sh -d /build/out/usr/share/themes -t orange --tweaks macos && \
+    mkdir -p /build/out/usr/share/icons && \
+    cp -r ../icons/Kanagawa /build/out/usr/share/icons/ && \
+    rm -rf /build/src/Kanagawa-GKT-Theme
+
 # =============================================================================
 # Stage 2: Final image
 # =============================================================================
@@ -470,6 +484,8 @@ RUN --mount=type=bind,from=builder,src=/build/out,dst=/tmp/builder-out \
         nautilus \
         # Fonts
         overpass-fonts \
+        # GTK theming (murrine engine for GTK2 themes)
+        gtk-murrine-engine \
         # Development tools
         caddy \
     && \

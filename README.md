@@ -43,6 +43,11 @@ This is my personal daily-driver system with a curated set of software tailored 
 - **gnome-keyring** - Secrets and credentials storage
 - **xdg-desktop-portal** stack - Screen sharing, file pickers, etc.
 
+### Theming
+
+- **Kanagawa GTK Theme** - Wave (dark) and Lotus (light) variants with orange accent
+- **Kanagawa Icon Theme** - Matching icon set
+
 ### CLI Tools
 
 - **zsh** + **starship** - Shell and prompt
@@ -80,6 +85,21 @@ systemctl reboot
 ```bash
 ./scripts/build-local.sh
 ```
+
+## Post-Install Configuration
+
+### GTK4/Libadwaita Theming
+
+GTK4 apps using libadwaita (Nautilus, GNOME Settings, etc.) require manual symlinks to apply the theme:
+
+```bash
+mkdir -p ~/.config/gtk-4.0
+ln -sf /usr/share/themes/Kanagawa-Orange-Dark/gtk-4.0/assets ~/.config/gtk-4.0/assets
+ln -sf /usr/share/themes/Kanagawa-Orange-Dark/gtk-4.0/gtk.css ~/.config/gtk-4.0/gtk.css
+ln -sf /usr/share/themes/Kanagawa-Orange-Dark/gtk-4.0/gtk-dark.css ~/.config/gtk-4.0/gtk-dark.css
+```
+
+For Lotus (light theme), replace `Kanagawa-Orange-Dark` with `Kanagawa-Orange-Light`.
 
 ## License
 
