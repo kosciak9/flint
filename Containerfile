@@ -421,8 +421,9 @@ RUN curl -fsSL "https://copr.fedorainfracloud.org/coprs/yalter/niri/repo/fedora-
     -o /etc/yum.repos.d/scottames-ghostty.repo
 
 # Install packages and configure system
-RUN --mount=type=cache,target=/var/cache \
-    --mount=type=bind,from=builder,src=/build/out,dst=/tmp/builder-out \
+# NOTE: Do NOT use --mount=type=cache for /var/cache here - it causes rpm-ostree
+# to return success even when packages are not found, masking build failures
+RUN --mount=type=bind,from=builder,src=/build/out,dst=/tmp/builder-out \
     # Install Fedora + COPR packages
     rpm-ostree install \
         # Core WM stack (from COPR yalter/niri)
@@ -507,6 +508,8 @@ RUN --mount=type=cache,target=/var/cache \
     # Copy config files (to /etc, not /usr/etc - ostree images use /etc directly)
     cp -r /tmp/files/usr/etc/* /etc/ && \
     cp -r /tmp/files/usr/share/* /usr/share/ 2>/dev/null || true && \
+    # Copy tmpfiles.d configuration (declares /var paths for first boot)
+    cp -r /tmp/files/usr/lib/tmpfiles.d/* /usr/lib/tmpfiles.d/ 2>/dev/null || true && \
     # Copy clight config dir
     mkdir -p /etc/clight && \
     cp -r /tmp/builder-out/etc/clight/* /etc/clight/ 2>/dev/null || true && \
