@@ -478,6 +478,8 @@ RUN --mount=type=bind,from=builder,src=/build/out,dst=/tmp/builder-out \
     # - waybar: we use AGS instead (pulled in as niri weak dep)
     # - mako: we use AGS for notifications instead
     rpm-ostree override remove toolbox waybar mako && \
+    # Grant caddy capability to bind to privileged ports (80, 443) without root
+    setcap cap_net_bind_service=+ep /usr/bin/caddy && \
     # Copy built binaries from builder stage
     cp -r /tmp/builder-out/usr/bin/* /usr/bin/ 2>/dev/null || true && \
     cp -r /tmp/builder-out/bin/* /usr/bin/ 2>/dev/null || true && \
