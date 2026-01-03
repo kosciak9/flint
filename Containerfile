@@ -221,7 +221,7 @@ RUN git clone --depth 1 https://github.com/vicinaehq/vicinae.git && \
 # Build starship (cross-shell prompt)
 # -----------------------------------------------------------------------------
 RUN --mount=type=cache,target=/var/cache/dnf \
-    dnf install -y rust cargo && dnf clean all
+    dnf install -y rust cargo systemd-devel hidapi-devel && dnf clean all
 
 RUN --mount=type=cache,target=/root/.cargo/registry \
     --mount=type=cache,target=/root/.cargo/git \
@@ -230,6 +230,18 @@ RUN --mount=type=cache,target=/root/.cargo/registry \
     cargo build --release && \
     install -Dm755 target/release/starship /build/out/bin/starship && \
     rm -rf /build/src/starship
+
+# -----------------------------------------------------------------------------
+# Build framework-system (Framework laptop hardware control)
+# -----------------------------------------------------------------------------
+RUN --mount=type=cache,target=/root/.cargo/registry \
+    --mount=type=cache,target=/root/.cargo/git \
+    git clone --depth 1 --branch v0.4.5 https://github.com/FrameworkComputer/framework-system.git && \
+    cd framework-system && \
+    cargo build --release -p framework_tool && \
+    install -Dm755 target/release/framework_tool /build/out/bin/framework_tool && \
+    install -Dm644 completions/zsh/_framework_tool /build/out/share/zsh/site-functions/_framework_tool && \
+    rm -rf /build/src/framework-system
 
 # -----------------------------------------------------------------------------
 # Build yadm (dotfiles manager)
