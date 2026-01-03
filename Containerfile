@@ -539,6 +539,21 @@ RUN --mount=type=bind,from=builder,src=/build/out,dst=/tmp/builder-out \
     # Brand the OS
     sed -i 's/^NAME=.*/NAME="Flint"/' /usr/lib/os-release && \
     sed -i 's/^PRETTY_NAME=.*/PRETTY_NAME="Flint"/' /usr/lib/os-release && \
+    # Plymouth theme: copy spinner assets into flint theme dir
+    cp /usr/share/plymouth/themes/spinner/animation-*.png \
+       /usr/share/plymouth/themes/spinner/throbber-*.png \
+       /usr/share/plymouth/themes/spinner/bullet.png \
+       /usr/share/plymouth/themes/spinner/capslock.png \
+       /usr/share/plymouth/themes/spinner/entry.png \
+       /usr/share/plymouth/themes/spinner/keyboard.png \
+       /usr/share/plymouth/themes/spinner/keymap-render.png \
+       /usr/share/plymouth/themes/spinner/lock.png \
+       /usr/share/plymouth/themes/flint/ && \
+    plymouth-set-default-theme flint && \
+    # Regenerate initramfs to include Plymouth theme
+    KERNEL_VERSION=$(rpm -q kernel --qf '%{VERSION}-%{RELEASE}.%{ARCH}') && \
+    dracut --no-hostonly --kver "$KERNEL_VERSION" --reproducible \
+           --add ostree -f "/lib/modules/$KERNEL_VERSION/initramfs.img" && \
     # Cleanup
     rm -rf /tmp/files /tmp/scripts && \
     rpm-ostree cleanup -m && \
