@@ -27,15 +27,7 @@
                     }
                 }
             ],
-            "quay.io/toolbx-images": [
-                {
-                    "type": "sigstoreSigned",
-                    "keyPath": "/etc/pki/containers/quay.io-toolbx-images.pub",
-                    "signedIdentity": {
-                        "type": "matchRepository"
-                    }
-                }
-            ],
+
             "registry.access.redhat.com": [
                 {
                     "type": "signedBy",

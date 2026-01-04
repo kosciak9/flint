@@ -500,6 +500,8 @@ RUN --mount=type=bind,from=builder,src=/build/out,dst=/tmp/builder-out \
         gtk-murrine-engine \
         # Development tools
         caddy \
+        # Bootloader (systemd-boot for faster boot, replaces GRUB)
+        systemd-boot-unsigned \
     && \
     # Remove unwanted packages from base image
     # - toolbox: we use distrobox only
