@@ -244,6 +244,18 @@ RUN --mount=type=cache,target=/root/.cargo/registry \
     rm -rf /build/src/framework-system
 
 # -----------------------------------------------------------------------------
+# Build qmk_hid (Framework 16 QMK keyboard backlight control)
+# Framework 16 uses QMK firmware for keyboard, not EC-based control like FW13
+# -----------------------------------------------------------------------------
+RUN --mount=type=cache,target=/root/.cargo/registry \
+    --mount=type=cache,target=/root/.cargo/git \
+    git clone --depth 1 --branch v0.1.13 https://github.com/FrameworkComputer/qmk_hid.git && \
+    cd qmk_hid && \
+    cargo build --release && \
+    install -Dm755 target/release/qmk_hid /build/out/bin/qmk_hid && \
+    rm -rf /build/src/qmk_hid
+
+# -----------------------------------------------------------------------------
 # Build yadm (dotfiles manager)
 # -----------------------------------------------------------------------------
 # No build deps - it's a shell script
