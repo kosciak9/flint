@@ -4,8 +4,8 @@ Description=Flint OS boot theme
 ModuleName=two-step
 
 [two-step]
-Font=Cantarell 12
-TitleFont=Cantarell Light 30
+Font=OverpassM Nerd Font 12
+TitleFont=OverpassM Nerd Font Light 30
 ImageDir=/usr/share/plymouth/themes/flint
 DialogHorizontalAlignment=.5
 DialogVerticalAlignment=.382

@@ -90,16 +90,17 @@ systemctl reboot
 
 ### GTK4/Libadwaita Theming
 
-GTK4 apps using libadwaita (Nautilus, GNOME Settings, etc.) require manual symlinks to apply the theme:
+Libadwaita apps (Nautilus, GNOME Settings, etc.) work best with their native styling. To apply Kanagawa's orange accent color without breaking app layouts:
 
 ```bash
 mkdir -p ~/.config/gtk-4.0
-ln -sf /usr/share/themes/Kanagawa-Orange-Dark/gtk-4.0/assets ~/.config/gtk-4.0/assets
-ln -sf /usr/share/themes/Kanagawa-Orange-Dark/gtk-4.0/gtk.css ~/.config/gtk-4.0/gtk.css
-ln -sf /usr/share/themes/Kanagawa-Orange-Dark/gtk-4.0/gtk-dark.css ~/.config/gtk-4.0/gtk-dark.css
+cat > ~/.config/gtk-4.0/gtk.css << 'EOF'
+@define-color accent_bg_color #ffa066;
+@define-color accent_color #ffa066;
+EOF
 ```
 
-For Lotus (light theme), replace `Kanagawa-Orange-Dark` with `Kanagawa-Orange-Light`.
+This gives libadwaita apps orange accents matching the Kanagawa theme while preserving proper margins and spacing.
 
 ## License
 
