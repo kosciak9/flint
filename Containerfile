@@ -158,7 +158,7 @@ RUN cd astal/lib/niri && \
 RUN --mount=type=cache,target=/var/cache/dnf \
     dnf install -y npm golang gjs && dnf clean all
 
-RUN git clone --depth 1 https://github.com/aylur/ags.git && \
+RUN git clone --depth 1 --branch v3.1.1 https://github.com/aylur/ags.git && \
     cd ags && \
     # Patch: use versioned .so.0 for LD_PRELOAD (unversioned .so is in -devel package)
     sed -i "s|libgtk4-layer-shell.so'|libgtk4-layer-shell.so.0'|" meson.build && \
@@ -175,7 +175,7 @@ RUN git clone --depth 1 https://github.com/aylur/ags.git && \
 RUN --mount=type=cache,target=/var/cache/dnf \
     dnf install -y cmake && dnf clean all
 
-RUN git clone --depth 1 https://github.com/github/cmark-gfm.git && \
+RUN git clone --depth 1 --branch 0.29.0.gfm.13 https://github.com/github/cmark-gfm.git && \
     cd cmark-gfm && \
     mkdir build && cd build && \
     cmake -DCMAKE_BUILD_TYPE=Release \
@@ -205,7 +205,7 @@ RUN --mount=type=cache,target=/var/cache/dnf \
     nodejs npm jq \
     && dnf clean all
 
-RUN git clone --depth 1 https://github.com/vicinaehq/vicinae.git && \
+RUN git clone --depth 1 --branch v0.19.0 https://github.com/vicinaehq/vicinae.git && \
     cd vicinae && \
     mkdir build && cd build && \
     cmake -G Ninja \
@@ -225,7 +225,7 @@ RUN --mount=type=cache,target=/var/cache/dnf \
 
 RUN --mount=type=cache,target=/root/.cargo/registry \
     --mount=type=cache,target=/root/.cargo/git \
-    git clone --depth 1 https://github.com/starship/starship.git && \
+    git clone --depth 1 --branch v1.24.2 https://github.com/starship/starship.git && \
     cd starship && \
     cargo build --release && \
     install -Dm755 target/release/starship /build/out/bin/starship && \
@@ -309,7 +309,7 @@ RUN --mount=type=cache,target=/root/.cargo/registry \
 # Build yadm (dotfiles manager)
 # -----------------------------------------------------------------------------
 # No build deps - it's a shell script
-RUN git clone --depth 1 https://github.com/yadm-dev/yadm.git && \
+RUN git clone --depth 1 --branch 3.5.0 https://github.com/yadm-dev/yadm.git && \
     install -Dm755 yadm/yadm /build/out/bin/yadm && \
     rm -rf /build/src/yadm
 
@@ -334,16 +334,16 @@ RUN --mount=type=cache,target=/var/cache/dnf \
     && dnf clean all
 
 # Build hyprland-protocols (Fedora version is too old)
-RUN git clone --depth 1 https://github.com/hyprwm/hyprland-protocols.git && \
+# Note: v0.7.0 uses meson (cmake was added after the tag)
+RUN git clone --depth 1 --branch v0.7.0 https://github.com/hyprwm/hyprland-protocols.git && \
     cd hyprland-protocols && \
-    cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr -B build && \
-    cmake --build build && \
-    DESTDIR=/build/out cmake --install build && \
-    cmake --install build && \
+    meson setup build --prefix=/usr && \
+    meson install -C build && \
+    DESTDIR=/build/out meson install -C build && \
     rm -rf /build/src/hyprland-protocols
 
 # Build hyprutils (base library, no hypr deps)
-RUN git clone --depth 1 https://github.com/hyprwm/hyprutils.git && \
+RUN git clone --depth 1 --branch v0.11.0 https://github.com/hyprwm/hyprutils.git && \
     cd hyprutils && \
     cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr -B build && \
     cmake --build build -j$(nproc) && \
@@ -353,7 +353,7 @@ RUN git clone --depth 1 https://github.com/hyprwm/hyprutils.git && \
     rm -rf /build/src/hyprutils
 
 # Build hyprwayland-scanner (code generator, needs pugixml)
-RUN git clone --depth 1 https://github.com/hyprwm/hyprwayland-scanner.git && \
+RUN git clone --depth 1 --branch v0.4.5 https://github.com/hyprwm/hyprwayland-scanner.git && \
     cd hyprwayland-scanner && \
     cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr -B build && \
     cmake --build build -j$(nproc) && \
@@ -362,7 +362,7 @@ RUN git clone --depth 1 https://github.com/hyprwm/hyprwayland-scanner.git && \
     rm -rf /build/src/hyprwayland-scanner
 
 # Build hyprlang (config language, needs hyprutils)
-RUN git clone --depth 1 https://github.com/hyprwm/hyprlang.git && \
+RUN git clone --depth 1 --branch v0.6.8 https://github.com/hyprwm/hyprlang.git && \
     cd hyprlang && \
     cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr -B build && \
     cmake --build build -j$(nproc) && \
@@ -372,7 +372,7 @@ RUN git clone --depth 1 https://github.com/hyprwm/hyprlang.git && \
     rm -rf /build/src/hyprlang
 
 # Build hyprgraphics (graphics utilities, needs hyprutils)
-RUN git clone --depth 1 https://github.com/hyprwm/hyprgraphics.git && \
+RUN git clone --depth 1 --branch v0.5.0 https://github.com/hyprwm/hyprgraphics.git && \
     cd hyprgraphics && \
     cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr -B build && \
     cmake --build build -j$(nproc) && \
@@ -382,7 +382,7 @@ RUN git clone --depth 1 https://github.com/hyprwm/hyprgraphics.git && \
     rm -rf /build/src/hyprgraphics
 
 # Build hypridle (idle daemon)
-RUN git clone --depth 1 https://github.com/hyprwm/hypridle.git && \
+RUN git clone --depth 1 --branch v0.1.7 https://github.com/hyprwm/hypridle.git && \
     cd hypridle && \
     cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr -B build && \
     cmake --build build -j$(nproc) && \
@@ -390,7 +390,7 @@ RUN git clone --depth 1 https://github.com/hyprwm/hypridle.git && \
     rm -rf /build/src/hypridle
 
 # Build hyprlock (screen locker)
-RUN git clone --depth 1 https://github.com/hyprwm/hyprlock.git && \
+RUN git clone --depth 1 --branch v0.9.2 https://github.com/hyprwm/hyprlock.git && \
     cd hyprlock && \
     cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr -B build && \
     cmake --build build -j$(nproc) && \
