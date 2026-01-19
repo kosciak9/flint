@@ -57,6 +57,14 @@ This is my personal daily-driver system with a curated set of software tailored 
 - **pass** - Password manager
 - **trash-cli** - Safe file deletion
 
+### Personal Information Management (Pimalaya)
+
+- **himalaya** - Email CLI with IMAP/SMTP and OAuth 2.0 support
+- **calendula** - Calendar CLI with CalDAV support
+- **cardamum** - Contacts CLI with CardDAV support
+- **ortie** - OAuth 2.0 token manager for Google/Microsoft accounts
+- **comodoro** - Pomodoro timer with client/server architecture
+
 ### Containers
 
 - **podman-compose** - Container orchestration

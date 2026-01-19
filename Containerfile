@@ -256,6 +256,56 @@ RUN --mount=type=cache,target=/root/.cargo/registry \
     rm -rf /build/src/qmk_hid
 
 # -----------------------------------------------------------------------------
+# Build Pimalaya ecosystem (email, calendar, contacts, OAuth, timer)
+# All Rust CLI tools with JSON output for AGS bar integration
+# -----------------------------------------------------------------------------
+
+# Build Ortie (OAuth 2.0 token manager) - needed by other Pimalaya tools
+RUN --mount=type=cache,target=/root/.cargo/registry \
+    --mount=type=cache,target=/root/.cargo/git \
+    git clone --depth 1 --branch v0.1.0 https://github.com/pimalaya/ortie.git && \
+    cd ortie && \
+    cargo build --release && \
+    install -Dm755 target/release/ortie /build/out/bin/ortie && \
+    rm -rf /build/src/ortie
+
+# Build Himalaya (email CLI) with OAuth 2.0 support
+RUN --mount=type=cache,target=/root/.cargo/registry \
+    --mount=type=cache,target=/root/.cargo/git \
+    git clone --depth 1 --branch v1.1.0 https://github.com/pimalaya/himalaya.git && \
+    cd himalaya && \
+    cargo build --release --features oauth2,keyring && \
+    install -Dm755 target/release/himalaya /build/out/bin/himalaya && \
+    rm -rf /build/src/himalaya
+
+# Build Calendula (calendar CLI) with CalDAV support
+RUN --mount=type=cache,target=/root/.cargo/registry \
+    --mount=type=cache,target=/root/.cargo/git \
+    git clone --depth 1 --branch v0.1.0 https://github.com/pimalaya/calendula.git && \
+    cd calendula && \
+    cargo build --release && \
+    install -Dm755 target/release/calendula /build/out/bin/calendula && \
+    rm -rf /build/src/calendula
+
+# Build Cardamum (contacts CLI) with CardDAV support
+RUN --mount=type=cache,target=/root/.cargo/registry \
+    --mount=type=cache,target=/root/.cargo/git \
+    git clone --depth 1 --branch v0.1.0 https://github.com/pimalaya/cardamum.git && \
+    cd cardamum && \
+    cargo build --release && \
+    install -Dm755 target/release/cardamum /build/out/bin/cardamum && \
+    rm -rf /build/src/cardamum
+
+# Build Comodoro (pomodoro timer CLI) with client/server and notifications
+RUN --mount=type=cache,target=/root/.cargo/registry \
+    --mount=type=cache,target=/root/.cargo/git \
+    git clone --depth 1 --branch v0.1.2 https://github.com/pimalaya/comodoro.git && \
+    cd comodoro && \
+    cargo build --release && \
+    install -Dm755 target/release/comodoro /build/out/bin/comodoro && \
+    rm -rf /build/src/comodoro
+
+# -----------------------------------------------------------------------------
 # Build yadm (dotfiles manager)
 # -----------------------------------------------------------------------------
 # No build deps - it's a shell script
