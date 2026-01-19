@@ -5,7 +5,7 @@
 # Switch from GRUB to systemd-boot (faster boot, no graphics init hang)
 switch-to-systemd-boot:
     #!/usr/bin/bash
-    set -euo pipefail
+    set -uo pipefail
     
     echo "=== Switching to systemd-boot ==="
     echo ""
@@ -23,9 +23,9 @@ switch-to-systemd-boot:
         exit 1
     fi
     
-    # Check current bootloader
+    # Check current bootloader (ignore errors, just informational)
     echo "Current boot configuration:"
-    bootctl status | head -20
+    bootctl status 2>/dev/null | head -20 || true
     echo ""
     
     read -p "This will install systemd-boot alongside your current bootloader. Continue? [y/N] " -n 1 -r
@@ -37,22 +37,25 @@ switch-to-systemd-boot:
     
     # Install systemd-boot
     echo "Installing systemd-boot to ESP..."
-    sudo bootctl install --esp-path=/boot/efi
+    if ! sudo bootctl install --esp-path=/boot/efi; then
+        echo "ERROR: Failed to install systemd-boot"
+        exit 1
+    fi
     
-    # Create loader.conf
+    # Create loader.conf (no leading spaces - heredoc indentation issue)
     echo "Configuring loader.conf..."
     sudo tee /boot/efi/loader/loader.conf > /dev/null << 'EOF'
-    default ostree-*
-    timeout 3
-    console-mode auto
-    editor no
-    EOF
+default ostree-*
+timeout 3
+console-mode auto
+editor no
+EOF
     
     # Verify installation
     echo ""
     echo "=== Installation complete ==="
     echo ""
-    bootctl status | head -30
+    bootctl status 2>/dev/null | head -30 || true
     echo ""
     echo "systemd-boot has been installed."
     echo ""

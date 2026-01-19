@@ -547,9 +547,16 @@ RUN --mount=type=bind,from=builder,src=/build/out,dst=/tmp/builder-out \
     cp -r /tmp/builder-out/etc/clight/* /etc/clight/ 2>/dev/null || true && \
     # Copy clightd sensors dir
     mkdir -p /etc/clightd/sensors.d && \
-    # Enable greetd and clightd via systemd preset (systemctl enable doesn't work at build time)
+    # Copy GRUB theme (Kanagawa)
+    mkdir -p /boot/grub2/themes && \
+    cp -r /tmp/files/boot/grub2/themes/kanagawa /boot/grub2/themes/ && \
+    # Copy GRUB setup script and service
+    cp /tmp/files/usr/libexec/flint-grub-setup /usr/libexec/ && \
+    chmod +x /usr/libexec/flint-grub-setup && \
+    cp /tmp/files/usr/lib/systemd/system/flint-grub-setup.service /usr/lib/systemd/system/ && \
+    # Enable greetd, clightd, and flint-grub-setup via systemd preset
     mkdir -p /usr/lib/systemd/system-preset && \
-    printf "enable greetd.service\nenable clightd.service\n" > /usr/lib/systemd/system-preset/50-flint.preset && \
+    printf "enable greetd.service\nenable clightd.service\nenable flint-grub-setup.service\n" > /usr/lib/systemd/system-preset/50-flint.preset && \
     # Brand the OS
     sed -i 's/^NAME=.*/NAME="Flint"/' /usr/lib/os-release && \
     sed -i 's/^PRETTY_NAME=.*/PRETTY_NAME="Flint"/' /usr/lib/os-release && \

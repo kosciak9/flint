@@ -1,0 +1,49 @@
+# Kanagawa GRUB Theme
+# Based on the Kanagawa colorscheme by rebelot
+# https://github.com/rebelot/kanagawa.nvim
+
+# Desktop
+desktop-image: "background.png"
+desktop-color: "#1F1F28"
+
+# Title (hidden)
+title-text: ""
+
+# Terminal box (hide the black box by making it match background)
+terminal-font: "Unifont Regular 24"
+terminal-left: "0"
+terminal-top: "0"
+terminal-width: "100%"
+terminal-height: "100%"
+
+# Boot menu (sized for HiDPI 2560x1600)
++ boot_menu {
+    left = 50%-600
+    top = 50%-250
+    width = 1200
+    height = 500
+    item_font = "Unifont Regular 64"
+    item_color = "#DCD7BA"
+    selected_item_font = "Unifont Regular 64"
+    selected_item_color = "#1F1F28"
+    selected_item_pixmap_style = "select_*.png"
+    item_height = 100
+    item_padding = 24
+    item_spacing = 24
+    icon_width = 80
+    icon_height = 80
+    item_icon_space = 36
+    scrollbar = false
+}
+
+# Countdown label
++ label {
+    left = 50%-300
+    top = 85%
+    width = 600
+    align = "center"
+    id = "__timeout__"
+    text = "Booting in %d seconds"
+    font = "Unifont Regular 40"
+    color = "#727169"
+}

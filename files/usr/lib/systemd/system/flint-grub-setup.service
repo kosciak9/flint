@@ -1,0 +1,19 @@
+[Unit]
+Description=Configure GRUB theme and BLS entries for Flint
+DefaultDependencies=no
+After=local-fs.target boot.mount
+Before=multi-user.target
+
+# Run after ostree deployment operations
+After=ostree-remount.service
+After=rpm-ostreed.service
+
+ConditionPathExists=/boot/loader/entries
+
+[Service]
+Type=oneshot
+ExecStart=/usr/libexec/flint-grub-setup
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
