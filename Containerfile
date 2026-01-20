@@ -466,6 +466,57 @@ RUN git clone --depth 1 https://github.com/nullobsi/clight-gui.git && \
     rm -rf /build/src/clight-gui
 
 # -----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+# Build Handy (offline speech-to-text)
+# Tauri 2.x app with Whisper/Parakeet models for local transcription
+# On Wayland/niri: use SIGUSR2 signal for toggle, e.g.:
+#   binds { Mod+Shift+H { spawn "pkill" "-USR2" "-n" "handy"; } }
+# -----------------------------------------------------------------------------
+RUN --mount=type=cache,target=/var/cache/dnf \
+    dnf install -y \
+    # Tauri/webkit2gtk build deps
+    webkit2gtk4.1-devel gtk3-devel libappindicator-gtk3-devel librsvg2-devel \
+    # Audio deps
+    alsa-lib-devel \
+    # Vulkan deps (for GPU-accelerated Whisper)
+    vulkan-devel vulkan-tools glslc \
+    # Clang/LLVM (required by bindgen for whisper-rs-sys)
+    clang clang-devel \
+    # Other build tools
+    patchelf \
+    # Required for Tauri AppImage bundling
+    xdg-utils \
+    && dnf clean all
+
+# Install Bun (JS runtime/bundler for Tauri frontend)
+RUN --mount=type=cache,target=/var/cache/dnf \
+    dnf install -y unzip && dnf clean all
+RUN curl -fsSL https://bun.sh/install | bash && \
+    ln -s /root/.bun/bin/bun /usr/local/bin/bun
+
+# Build Handy
+RUN --mount=type=cache,target=/root/.cargo/registry \
+    --mount=type=cache,target=/root/.cargo/git \
+    --mount=type=cache,target=/root/.bun/install/cache \
+    git clone --depth 1 https://github.com/cjpais/Handy.git handy && \
+    cd handy && \
+    bun install && \
+    bun tauri build --no-bundle && \
+    # Install binary (lowercase on Linux)
+    install -Dm755 src-tauri/target/release/handy /build/out/bin/handy && \
+    # Install resources (Tauri expects them at /usr/lib/<productName>/ on Linux)
+    # productName in tauri.conf.json is "Handy" (capital H)
+    mkdir -p /build/out/lib/Handy && \
+    cp -r src-tauri/resources/* /build/out/lib/Handy/ && \
+    # Install desktop file
+    mkdir -p /build/out/share/applications && \
+    printf '[Desktop Entry]\nName=Handy\nComment=Offline speech-to-text\nExec=handy\nIcon=handy\nType=Application\nCategories=Utility;Accessibility;\n' \
+        > /build/out/share/applications/handy.desktop && \
+    # Install icon (optional - don't fail if missing)
+    (install -Dm644 src-tauri/icons/icon.png /build/out/share/icons/hicolor/256x256/apps/handy.png 2>/dev/null || true) && \
+    rm -rf /build/src/handy
+
+# -----------------------------------------------------------------------------
 # Build Kanagawa GTK Theme
 # Wave (dark) + Lotus (light) variants, orange accent, macOS window buttons
 # -----------------------------------------------------------------------------
@@ -538,6 +589,9 @@ RUN --mount=type=bind,from=builder,src=/build/out,dst=/tmp/builder-out \
         libiio libddcutil popt gsl libconfig \
         # clight-gui runtime (Qt5) - Qt5Xml is included in qt5-qtbase
         qt5-qtbase qt5-qtcharts \
+        # Handy runtime deps (speech-to-text)
+        # wtype for Wayland text input, webkit2gtk4.1 for Tauri webview
+        wtype webkit2gtk4.1 gtk3 libappindicator-gtk3 \
 
         # GPG/Keyring integration
         # gnome-keyring is required for the Secret portal (Flatpak apps storing credentials)
@@ -568,6 +622,8 @@ RUN --mount=type=bind,from=builder,src=/build/out,dst=/tmp/builder-out \
     # Copy libraries (built from source: astal, cmark-gfm, hypr*)
     cp -r /tmp/builder-out/usr/lib64/* /usr/lib64/ 2>/dev/null || true && \
     cp -r /tmp/builder-out/lib64/* /usr/lib64/ 2>/dev/null || true && \
+    # Copy app resources (Handy resources at /usr/lib/handy/)
+    cp -r /tmp/builder-out/lib/* /usr/lib/ 2>/dev/null || true && \
     # Recompile GSettings schemas (astal libraries add new schemas)
     glib-compile-schemas /usr/share/glib-2.0/schemas/ && \
     # Copy systemd user services (e.g., vicinae.service)
