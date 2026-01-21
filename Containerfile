@@ -504,10 +504,6 @@ RUN --mount=type=cache,target=/root/.cargo/registry \
     bun tauri build --no-bundle && \
     # Install binary (lowercase on Linux)
     install -Dm755 src-tauri/target/release/handy /build/out/bin/handy && \
-    # Install resources (Tauri expects them at /usr/lib/<productName>/ on Linux)
-    # productName in tauri.conf.json is "Handy" (capital H)
-    mkdir -p /build/out/lib/Handy && \
-    cp -r src-tauri/resources/* /build/out/lib/Handy/ && \
     # Install desktop file
     mkdir -p /build/out/share/applications && \
     printf '[Desktop Entry]\nName=Handy\nComment=Offline speech-to-text\nExec=handy\nIcon=handy\nType=Application\nCategories=Utility;Accessibility;\n' \
@@ -586,7 +582,7 @@ RUN --mount=type=bind,from=builder,src=/build/out,dst=/tmp/builder-out \
         qt6-qtbase qt6-qtsvg qt6-qt5compat qt6-qtwayland qtkeychain-qt6 nodejs \
         layer-shell-qt abseil-cpp libqalculate protobuf minizip \
         # Clight runtime deps
-        libiio libddcutil popt gsl libconfig \
+        libiio ddcutil popt gsl libconfig \
         # clight-gui runtime (Qt5) - Qt5Xml is included in qt5-qtbase
         qt5-qtbase qt5-qtcharts \
         # Handy runtime deps (speech-to-text)
@@ -595,7 +591,8 @@ RUN --mount=type=bind,from=builder,src=/build/out,dst=/tmp/builder-out \
 
         # GPG/Keyring integration
         # gnome-keyring is required for the Secret portal (Flatpak apps storing credentials)
-        gnome-keyring pinentry-gnome3 \
+        # gnome-keyring-pam provides pam_gnome_keyring.so for auto-unlock on login
+        gnome-keyring gnome-keyring-pam pinentry-gnome3 \
         # File manager - also used by xdg-desktop-portal-gnome for file picker dialogs
         nautilus \
         # Fonts
@@ -622,8 +619,6 @@ RUN --mount=type=bind,from=builder,src=/build/out,dst=/tmp/builder-out \
     # Copy libraries (built from source: astal, cmark-gfm, hypr*)
     cp -r /tmp/builder-out/usr/lib64/* /usr/lib64/ 2>/dev/null || true && \
     cp -r /tmp/builder-out/lib64/* /usr/lib64/ 2>/dev/null || true && \
-    # Copy app resources (Handy resources at /usr/lib/handy/)
-    cp -r /tmp/builder-out/lib/* /usr/lib/ 2>/dev/null || true && \
     # Recompile GSettings schemas (astal libraries add new schemas)
     glib-compile-schemas /usr/share/glib-2.0/schemas/ && \
     # Copy systemd user services (e.g., vicinae.service)
@@ -663,6 +658,8 @@ RUN --mount=type=bind,from=builder,src=/build/out,dst=/tmp/builder-out \
     # Enable greetd, clightd, and flint-grub-setup via systemd preset
     mkdir -p /usr/lib/systemd/system-preset && \
     printf "enable greetd.service\nenable clightd.service\nenable flint-grub-setup.service\n" > /usr/lib/systemd/system-preset/50-flint.preset && \
+    # Enable gnome-keyring PAM integration for auto-unlock on login
+    authselect select local with-pam-gnome-keyring with-silent-lastlog with-mdns4 --force && \
     # Brand the OS
     sed -i 's/^NAME=.*/NAME="Flint"/' /usr/lib/os-release && \
     sed -i 's/^PRETTY_NAME=.*/PRETTY_NAME="Flint"/' /usr/lib/os-release && \
