@@ -205,7 +205,7 @@ RUN --mount=type=cache,target=/var/cache/dnf \
     nodejs npm jq \
     && dnf clean all
 
-RUN git clone --depth 1 --branch v0.19.0 https://github.com/vicinaehq/vicinae.git && \
+RUN git clone --depth 1 --branch v0.19.3 https://github.com/vicinaehq/vicinae.git && \
     cd vicinae && \
     mkdir build && cd build && \
     cmake -G Ninja \
@@ -236,7 +236,7 @@ RUN --mount=type=cache,target=/root/.cargo/registry \
 # -----------------------------------------------------------------------------
 RUN --mount=type=cache,target=/root/.cargo/registry \
     --mount=type=cache,target=/root/.cargo/git \
-    git clone --depth 1 --branch v0.4.5 https://github.com/FrameworkComputer/framework-system.git && \
+    git clone --depth 1 --branch v0.5.0 https://github.com/FrameworkComputer/framework-system.git && \
     cd framework-system && \
     cargo build --release -p framework_tool && \
     install -Dm755 target/release/framework_tool /build/out/bin/framework_tool && \
