@@ -205,7 +205,7 @@ RUN --mount=type=cache,target=/var/cache/dnf \
     nodejs npm jq \
     && dnf clean all
 
-RUN git clone --depth 1 --branch v0.19.3 https://github.com/vicinaehq/vicinae.git && \
+RUN git clone --depth 1 --branch v0.19.9 https://github.com/vicinaehq/vicinae.git && \
     cd vicinae && \
     mkdir build && cd build && \
     cmake -G Ninja \
@@ -263,7 +263,7 @@ RUN --mount=type=cache,target=/root/.cargo/registry \
 # Build Ortie (OAuth 2.0 token manager) - needed by other Pimalaya tools
 RUN --mount=type=cache,target=/root/.cargo/registry \
     --mount=type=cache,target=/root/.cargo/git \
-    git clone --depth 1 --branch v0.1.0 https://github.com/pimalaya/ortie.git && \
+    git clone --depth 1 --branch v1.1.0 https://github.com/pimalaya/ortie.git && \
     cd ortie && \
     cargo build --release && \
     install -Dm755 target/release/ortie /build/out/bin/ortie && \
@@ -299,7 +299,7 @@ RUN --mount=type=cache,target=/root/.cargo/registry \
 # Build Comodoro (pomodoro timer CLI) with client/server and notifications
 RUN --mount=type=cache,target=/root/.cargo/registry \
     --mount=type=cache,target=/root/.cargo/git \
-    git clone --depth 1 --branch v0.1.2 https://github.com/pimalaya/comodoro.git && \
+    git clone --depth 1 --branch v1.0.0 https://github.com/pimalaya/comodoro.git && \
     cd comodoro && \
     cargo build --release && \
     install -Dm755 target/release/comodoro /build/out/bin/comodoro && \
