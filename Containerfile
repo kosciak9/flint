@@ -196,16 +196,18 @@ RUN git clone --depth 1 --branch 0.29.0.gfm.13 https://github.com/github/cmark-g
 RUN --mount=type=cache,target=/var/cache/dnf \
     dnf install -y \
     cmake ninja-build \
-    qt6-qtbase-devel qt6-qtsvg-devel qt6-qt5compat-devel qt6-qtwayland-devel \
+    qt6-qtbase-devel qt6-qtbase-private-devel \
+    qt6-qtdeclarative-devel qt6-qtsvg-devel qt6-qt5compat-devel qt6-qtwayland-devel \
     qtkeychain-qt6-devel rapidfuzz-cpp-devel \
     openssl-devel protobuf-devel protobuf-compiler libqalculate-devel \
     layer-shell-qt-devel abseil-cpp-devel \
     wayland-devel libxkbcommon-devel libX11-devel libxcb-devel \
-    minizip-devel \
+    minizip-devel libxml2-devel \
+    kf6-syntax-highlighting-devel \
     nodejs npm jq \
     && dnf clean all
 
-RUN git clone --depth 1 --branch v0.19.9 https://github.com/vicinaehq/vicinae.git && \
+RUN git clone --depth 1 --branch v0.20.2 https://github.com/vicinaehq/vicinae.git && \
     cd vicinae && \
     mkdir build && cd build && \
     cmake -G Ninja \
@@ -272,7 +274,7 @@ RUN --mount=type=cache,target=/root/.cargo/registry \
 # Build Himalaya (email CLI) with OAuth 2.0 support
 RUN --mount=type=cache,target=/root/.cargo/registry \
     --mount=type=cache,target=/root/.cargo/git \
-    git clone --depth 1 --branch v1.1.0 https://github.com/pimalaya/himalaya.git && \
+    git clone --depth 1 --branch v1.2.0 https://github.com/pimalaya/himalaya.git && \
     cd himalaya && \
     cargo build --release --features oauth2,keyring && \
     install -Dm755 target/release/himalaya /build/out/bin/himalaya && \
@@ -578,9 +580,10 @@ RUN --mount=type=bind,from=builder,src=/build/out,dst=/tmp/builder-out \
         # Runtime deps for source-built packages
         # AGS runtime (GTK4 + layer shell)
         gtk4 gtk4-layer-shell gtk3 gtk-layer-shell gjs \
-        # Vicinae runtime
-        qt6-qtbase qt6-qtsvg qt6-qt5compat qt6-qtwayland qtkeychain-qt6 nodejs \
+        # Vicinae runtime (v0.20+ uses QtQuick/QML instead of QWidgets)
+        qt6-qtbase qt6-qtdeclarative qt6-qtsvg qt6-qt5compat qt6-qtwayland qtkeychain-qt6 nodejs \
         layer-shell-qt abseil-cpp libqalculate protobuf minizip \
+        libxml2 kf6-syntax-highlighting \
         # Clight runtime deps
         libiio ddcutil popt gsl libconfig \
         # clight-gui runtime (Qt5) - Qt5Xml is included in qt5-qtbase
