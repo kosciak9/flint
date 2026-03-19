@@ -207,7 +207,7 @@ RUN --mount=type=cache,target=/var/cache/dnf \
     nodejs npm jq \
     && dnf clean all
 
-RUN git clone --depth 1 --branch v0.20.2 https://github.com/vicinaehq/vicinae.git && \
+RUN git clone --depth 1 --branch v0.20.7 https://github.com/vicinaehq/vicinae.git && \
     cd vicinae && \
     mkdir build && cd build && \
     cmake -G Ninja \
@@ -235,15 +235,15 @@ RUN --mount=type=cache,target=/root/.cargo/registry \
 
 # -----------------------------------------------------------------------------
 # Build framework-system (Framework laptop hardware control)
+# NOTE: GitHub repo (FrameworkComputer/framework-system) went private ~March 2026.
+#       Now installing from crates.io instead. Shell completions are no longer
+#       available (they were only in the git repo, not the published crate).
 # -----------------------------------------------------------------------------
 RUN --mount=type=cache,target=/root/.cargo/registry \
     --mount=type=cache,target=/root/.cargo/git \
-    git clone --depth 1 --branch v0.5.0 https://github.com/FrameworkComputer/framework-system.git && \
-    cd framework-system && \
-    cargo build --release -p framework_tool && \
-    install -Dm755 target/release/framework_tool /build/out/bin/framework_tool && \
-    install -Dm644 completions/zsh/_framework_tool /build/out/share/zsh/site-functions/_framework_tool && \
-    rm -rf /build/src/framework-system
+    cargo install framework_tool --version 0.6.1 --root /tmp/framework_tool && \
+    install -Dm755 /tmp/framework_tool/bin/framework_tool /build/out/bin/framework_tool && \
+    rm -rf /tmp/framework_tool
 
 # -----------------------------------------------------------------------------
 # Build qmk_hid (Framework 16 QMK keyboard backlight control)
