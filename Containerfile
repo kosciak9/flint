@@ -593,6 +593,9 @@ RUN --mount=type=bind,from=builder,src=/build/out,dst=/tmp/builder-out \
     # Copy polkit policies (for clightd)
     mkdir -p /usr/share/polkit-1/actions && \
     cp -r /tmp/builder-out/usr/share/polkit-1/actions/* /usr/share/polkit-1/actions/ 2>/dev/null || true && \
+    # Copy udev rules (power profile switching on AC/battery)
+    mkdir -p /usr/lib/udev/rules.d && \
+    cp -r /tmp/files/usr/lib/udev/rules.d/* /usr/lib/udev/rules.d/ 2>/dev/null || true && \
     # Copy config files (to /etc, not /usr/etc - ostree images use /etc directly)
     cp -r /tmp/files/usr/etc/* /etc/ && \
     cp -r /tmp/files/usr/share/* /usr/share/ 2>/dev/null || true && \
@@ -612,7 +615,7 @@ RUN --mount=type=bind,from=builder,src=/build/out,dst=/tmp/builder-out \
     cp /tmp/files/usr/lib/systemd/system/flint-grub-setup.service /usr/lib/systemd/system/ && \
     # Enable greetd, clightd, and flint-grub-setup via systemd preset
     mkdir -p /usr/lib/systemd/system-preset && \
-    printf "enable greetd.service\nenable clightd.service\nenable flint-grub-setup.service\n" > /usr/lib/systemd/system-preset/50-flint.preset && \
+    printf "enable greetd.service\nenable clightd.service\nenable flint-grub-setup.service\ndisable thermald.service\n" > /usr/lib/systemd/system-preset/50-flint.preset && \
     # Enable gnome-keyring PAM integration for auto-unlock on login
     authselect select local with-pam-gnome-keyring with-silent-lastlog with-mdns4 --force && \
     # Brand the OS
