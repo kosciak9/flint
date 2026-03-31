@@ -613,9 +613,13 @@ RUN --mount=type=bind,from=builder,src=/build/out,dst=/tmp/builder-out \
     cp /tmp/files/usr/libexec/flint-grub-setup /usr/libexec/ && \
     chmod +x /usr/libexec/flint-grub-setup && \
     cp /tmp/files/usr/lib/systemd/system/flint-grub-setup.service /usr/lib/systemd/system/ && \
-    # Enable greetd, clightd, and flint-grub-setup via systemd preset
+    # Copy EPP sync script and service (works around PPD not setting EPP)
+    cp /tmp/files/usr/libexec/flint-epp-sync /usr/libexec/ && \
+    chmod +x /usr/libexec/flint-epp-sync && \
+    cp /tmp/files/usr/lib/systemd/system/flint-epp-sync.service /usr/lib/systemd/system/ && \
+    # Enable greetd, clightd, flint-grub-setup, and flint-epp-sync via systemd preset
     mkdir -p /usr/lib/systemd/system-preset && \
-    printf "enable greetd.service\nenable clightd.service\nenable flint-grub-setup.service\ndisable thermald.service\n" > /usr/lib/systemd/system-preset/50-flint.preset && \
+    printf "enable greetd.service\nenable clightd.service\nenable flint-grub-setup.service\nenable flint-epp-sync.service\ndisable thermald.service\n" > /usr/lib/systemd/system-preset/50-flint.preset && \
     # Enable gnome-keyring PAM integration for auto-unlock on login
     authselect select local with-pam-gnome-keyring with-silent-lastlog with-mdns4 --force && \
     # Brand the OS

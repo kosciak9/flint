@@ -1,0 +1,31 @@
+#!/bin/bash
+# Flint EPP sync service - monitors PPD and sets EPP accordingly
+# Runs as a systemd service
+
+set_epp() {
+    local profile="$1"
+    case "$profile" in
+        power-saver)  epp="balance_power" ;;
+        balanced)     epp="balance_performance" ;;
+        performance)  epp="performance" ;;
+        *)            epp="balance_power" ;;
+    esac
+    echo "$epp" | tee /sys/devices/system/cpu/cpu*/cpufreq/energy_performance_preference > /dev/null 2>&1
+}
+
+# Set initial EPP based on current profile
+current_profile=$(powerprofilesctl get 2>/dev/null || echo "power-saver")
+set_epp "$current_profile"
+
+# Monitor for profile changes via dbus
+dbus-monitor --system "type='signal',interface='net.hadess.PowerProfiles',member='PropertiesChanged'" 2>/dev/null | \
+while read -r line; do
+    if echo "$line" | grep -q "ActiveProfile"; then
+        # Read the next line which should contain the new profile
+        read -r next_line
+        profile=$(echo "$next_line" | grep -oE "'[^']+'" | tr -d "'" | head -1)
+        if [ -n "$profile" ]; then
+            set_epp "$profile"
+        fi
+    fi
+done
