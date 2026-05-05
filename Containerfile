@@ -207,7 +207,7 @@ RUN --mount=type=cache,target=/var/cache/dnf \
     nodejs npm jq \
     && dnf clean all
 
-RUN git clone --depth 1 --branch v0.20.7 https://github.com/vicinaehq/vicinae.git && \
+RUN git clone --depth 1 --branch v0.20.9 https://github.com/vicinaehq/vicinae.git && \
     cd vicinae && \
     mkdir build && cd build && \
     cmake -G Ninja \
@@ -345,7 +345,7 @@ RUN git clone --depth 1 --branch v0.7.0 https://github.com/hyprwm/hyprland-proto
     rm -rf /build/src/hyprland-protocols
 
 # Build hyprutils (base library, no hypr deps)
-RUN git clone --depth 1 --branch v0.11.0 https://github.com/hyprwm/hyprutils.git && \
+RUN git clone --depth 1 --branch v0.12.0 https://github.com/hyprwm/hyprutils.git && \
     cd hyprutils && \
     cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr -B build && \
     cmake --build build -j$(nproc) && \
@@ -392,80 +392,12 @@ RUN git clone --depth 1 --branch v0.1.7 https://github.com/hyprwm/hypridle.git &
     rm -rf /build/src/hypridle
 
 # Build hyprlock (screen locker)
-RUN git clone --depth 1 --branch v0.9.2 https://github.com/hyprwm/hyprlock.git && \
+RUN git clone --depth 1 --branch v0.9.3 https://github.com/hyprwm/hyprlock.git && \
     cd hyprlock && \
     cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr -B build && \
     cmake --build build -j$(nproc) && \
     DESTDIR=/build/out cmake --install build && \
     rm -rf /build/src/hyprlock
-
-# -----------------------------------------------------------------------------
-# Build Clight ecosystem (automatic brightness/gamma based on ambient light)
-# Build order: libmodule -> Clightd -> Clight -> clight-gui
-# -----------------------------------------------------------------------------
-
-# Install Clight build dependencies
-RUN --mount=type=cache,target=/var/cache/dnf \
-    dnf install -y \
-    # libmodule deps (just cmake, already have it)
-    # Clightd required deps
-    systemd-devel libudev-devel libjpeg-turbo-devel libiio-devel \
-    polkit-devel dbus-devel \
-    # Clightd optional deps for GAMMA/DPMS/SCREEN (wayland + X11 + DRM)
-    libXrandr-devel libXext-devel libX11-devel \
-    libdrm-devel wayland-devel wayland-protocols-devel \
-    # Clightd optional dep for DDC (external monitors)
-    libddcutil-devel \
-    # Clight deps
-    popt-devel gsl-devel libconfig-devel \
-    # clight-gui deps (Qt5) - Qt5Xml is included in qt5-qtbase-devel
-    qt5-qtbase-devel qt5-qtcharts-devel \
-    && dnf clean all
-
-# Build libmodule 5.0.2 (actor library for Clight/Clightd)
-RUN git clone --depth 1 --branch 5.0.2 https://github.com/FedeDP/libmodule.git && \
-    cd libmodule && \
-    cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr -B build && \
-    cmake --build build -j$(nproc) && \
-    cmake --install build && \
-    DESTDIR=/build/out cmake --install build && \
-    ldconfig && \
-    rm -rf /build/src/libmodule
-
-# Build Clightd 5.9 (system DBus daemon for screen control)
-# Enable: GAMMA, DPMS, SCREEN (wayland wlr-* protocols + X11 + DRM), DDC
-# Disable: PIPEWIRE, YOCTOLIGHT
-RUN git clone --depth 1 --branch 5.9 https://github.com/FedeDP/Clightd.git && \
-    cd Clightd && \
-    cmake -DCMAKE_BUILD_TYPE=Release \
-        -DCMAKE_INSTALL_PREFIX=/usr \
-        -DENABLE_GAMMA=ON \
-        -DENABLE_DPMS=ON \
-        -DENABLE_SCREEN=ON \
-        -DENABLE_DDC=ON \
-        -DENABLE_YOCTOLIGHT=OFF \
-        -DENABLE_PIPEWIRE=OFF \
-        -B build && \
-    cmake --build build -j$(nproc) && \
-    cmake --install build && \
-    DESTDIR=/build/out cmake --install build && \
-    rm -rf /build/src/Clightd
-
-# Build Clight 4.11 (user daemon for automatic brightness/gamma)
-RUN git clone --depth 1 --branch 4.11 https://github.com/FedeDP/Clight.git && \
-    cd Clight && \
-    cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr -B build && \
-    cmake --build build -j$(nproc) && \
-    DESTDIR=/build/out cmake --install build && \
-    rm -rf /build/src/Clight
-
-# Build clight-gui (Qt5 GUI for Clight)
-RUN git clone --depth 1 https://github.com/nullobsi/clight-gui.git && \
-    cd clight-gui && \
-    cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr -S src -B build && \
-    cmake --build build -j$(nproc) && \
-    DESTDIR=/build/out cmake --install build && \
-    rm -rf /build/src/clight-gui
 
 # -----------------------------------------------------------------------------
 # Build Kanagawa GTK Theme
@@ -537,10 +469,6 @@ RUN --mount=type=bind,from=builder,src=/build/out,dst=/tmp/builder-out \
         qt6-qtbase qt6-qtdeclarative qt6-qtsvg qt6-qt5compat qt6-qtwayland qtkeychain-qt6 nodejs \
         layer-shell-qt abseil-cpp libqalculate protobuf minizip \
         libxml2 kf6-syntax-highlighting \
-        # Clight runtime deps
-        libiio ddcutil popt gsl libconfig \
-        # clight-gui runtime (Qt5) - Qt5Xml is included in qt5-qtbase
-        qt5-qtbase qt5-qtcharts \
         # Wayland text input
         wtype \
 
@@ -579,20 +507,9 @@ RUN --mount=type=bind,from=builder,src=/build/out,dst=/tmp/builder-out \
     # Copy systemd user services (e.g., vicinae.service)
     mkdir -p /usr/lib/systemd/user && \
     cp -r /tmp/builder-out/usr/lib/systemd/user/* /usr/lib/systemd/user/ 2>/dev/null || true && \
-    # Copy systemd system services (e.g., clightd.service)
-    mkdir -p /usr/lib/systemd/system && \
-    cp -r /tmp/builder-out/usr/lib/systemd/system/* /usr/lib/systemd/system/ 2>/dev/null || true && \
-    # Copy clightd libexec binary
-    mkdir -p /usr/libexec && \
-    cp -r /tmp/builder-out/usr/libexec/* /usr/libexec/ 2>/dev/null || true && \
-    # Copy D-Bus system bus services and configs (for clightd)
-    mkdir -p /usr/share/dbus-1/system-services && \
-    cp -r /tmp/builder-out/usr/share/dbus-1/system-services/* /usr/share/dbus-1/system-services/ 2>/dev/null || true && \
-    mkdir -p /etc/dbus-1/system.d && \
-    cp -r /tmp/builder-out/etc/dbus-1/system.d/* /etc/dbus-1/system.d/ 2>/dev/null || true && \
-    # Copy polkit policies (for clightd)
-    mkdir -p /usr/share/polkit-1/actions && \
-    cp -r /tmp/builder-out/usr/share/polkit-1/actions/* /usr/share/polkit-1/actions/ 2>/dev/null || true && \
+    # Copy vicinae server helper binary
+    mkdir -p /usr/libexec/vicinae && \
+    cp -r /tmp/builder-out/usr/libexec/vicinae/* /usr/libexec/vicinae/ 2>/dev/null || true && \
     # Copy udev rules (power profile switching on AC/battery)
     mkdir -p /usr/lib/udev/rules.d && \
     cp -r /tmp/files/usr/lib/udev/rules.d/* /usr/lib/udev/rules.d/ 2>/dev/null || true && \
@@ -601,11 +518,6 @@ RUN --mount=type=bind,from=builder,src=/build/out,dst=/tmp/builder-out \
     cp -r /tmp/files/usr/share/* /usr/share/ 2>/dev/null || true && \
     # Copy tmpfiles.d configuration (declares /var paths for first boot)
     cp -r /tmp/files/usr/lib/tmpfiles.d/* /usr/lib/tmpfiles.d/ 2>/dev/null || true && \
-    # Copy clight config dir
-    mkdir -p /etc/clight && \
-    cp -r /tmp/builder-out/etc/clight/* /etc/clight/ 2>/dev/null || true && \
-    # Copy clightd sensors dir
-    mkdir -p /etc/clightd/sensors.d && \
     # Copy GRUB theme (Kanagawa)
     mkdir -p /boot/grub2/themes && \
     cp -r /tmp/files/boot/grub2/themes/kanagawa /boot/grub2/themes/ && \
@@ -617,9 +529,9 @@ RUN --mount=type=bind,from=builder,src=/build/out,dst=/tmp/builder-out \
     cp /tmp/files/usr/libexec/flint-epp-sync /usr/libexec/ && \
     chmod +x /usr/libexec/flint-epp-sync && \
     cp /tmp/files/usr/lib/systemd/system/flint-epp-sync.service /usr/lib/systemd/system/ && \
-    # Enable greetd, clightd, flint-grub-setup, and flint-epp-sync via systemd preset
+    # Enable greetd, flint-grub-setup, and flint-epp-sync via systemd preset
     mkdir -p /usr/lib/systemd/system-preset && \
-    printf "enable greetd.service\nenable clightd.service\nenable flint-grub-setup.service\nenable flint-epp-sync.service\ndisable thermald.service\n" > /usr/lib/systemd/system-preset/50-flint.preset && \
+    printf "enable greetd.service\nenable flint-grub-setup.service\nenable flint-epp-sync.service\ndisable thermald.service\n" > /usr/lib/systemd/system-preset/50-flint.preset && \
     # Enable gnome-keyring PAM integration for auto-unlock on login
     authselect select local with-pam-gnome-keyring with-silent-lastlog with-mdns4 --force && \
     # Brand the OS
