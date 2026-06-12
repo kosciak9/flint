@@ -96,6 +96,11 @@ jobs:
       - name: Install cosign
         if: github.event_name != 'pull_request'
         uses: sigstore/cosign-installer@v4.1.2
+        with:
+          # rpm-ostree/containers-image sigstoreSigned policies still discover
+          # legacy Cosign attachments at sha256-<digest>.sig. Cosign v3 defaults
+          # to OCI referrer-style artifacts that rpm-ostree cannot find yet.
+          cosign-release: v2.6.1
 
       - name: Sign image with cosign
         if: github.event_name != 'pull_request'
