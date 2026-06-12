@@ -180,6 +180,7 @@ RUN git clone --depth 1 --branch 0.29.0.gfm.13 https://github.com/github/cmark-g
     mkdir build && cd build && \
     cmake -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_INSTALL_PREFIX=/usr \
+        -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
         -DCMARK_SHARED=ON \
         -DCMARK_STATIC=OFF \
         .. && \
