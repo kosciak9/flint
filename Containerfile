@@ -472,7 +472,6 @@ RUN --mount=type=bind,from=builder,src=/build/out,dst=/tmp/builder-out \
         libxml2 kf6-syntax-highlighting \
         # Wayland text input
         wtype \
-
         # GPG/Keyring integration
         # gnome-keyring is required for the Secret portal (Flatpak apps storing credentials)
         # gnome-keyring-pam provides pam_gnome_keyring.so for auto-unlock on login
