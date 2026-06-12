@@ -7,7 +7,7 @@
 #   Stage 2 (final)   - Assemble final image on ublue-os base
 # =============================================================================
 
-ARG FEDORA_VERSION=43
+ARG FEDORA_VERSION=44
 ARG UBLUE_IMAGE=ghcr.io/ublue-os/base-main
 
 # =============================================================================
@@ -158,7 +158,7 @@ RUN cd astal/lib/niri && \
 RUN --mount=type=cache,target=/var/cache/dnf \
     dnf install -y npm golang gjs && dnf clean all
 
-RUN git clone --depth 1 --branch v3.1.1 https://github.com/aylur/ags.git && \
+RUN git clone --depth 1 --branch v3.1.2 https://github.com/aylur/ags.git && \
     cd ags && \
     # Patch: use versioned .so.0 for LD_PRELOAD (unversioned .so is in -devel package)
     sed -i "s|libgtk4-layer-shell.so'|libgtk4-layer-shell.so.0'|" meson.build && \
@@ -207,7 +207,7 @@ RUN --mount=type=cache,target=/var/cache/dnf \
     nodejs npm jq \
     && dnf clean all
 
-RUN git clone --depth 1 --branch v0.20.9 https://github.com/vicinaehq/vicinae.git && \
+RUN git clone --depth 1 --branch v0.20.15 https://github.com/vicinaehq/vicinae.git && \
     cd vicinae && \
     mkdir build && cd build && \
     cmake -G Ninja \
@@ -227,7 +227,7 @@ RUN --mount=type=cache,target=/var/cache/dnf \
 
 RUN --mount=type=cache,target=/root/.cargo/registry \
     --mount=type=cache,target=/root/.cargo/git \
-    git clone --depth 1 --branch v1.24.2 https://github.com/starship/starship.git && \
+    git clone --depth 1 --branch v1.25.1 https://github.com/starship/starship.git && \
     cd starship && \
     cargo build --release && \
     install -Dm755 target/release/starship /build/out/bin/starship && \
@@ -241,7 +241,7 @@ RUN --mount=type=cache,target=/root/.cargo/registry \
 # -----------------------------------------------------------------------------
 RUN --mount=type=cache,target=/root/.cargo/registry \
     --mount=type=cache,target=/root/.cargo/git \
-    cargo install framework_tool --version 0.6.1 --root /tmp/framework_tool && \
+    cargo install framework_tool --version 0.6.4 --root /tmp/framework_tool && \
     install -Dm755 /tmp/framework_tool/bin/framework_tool /build/out/bin/framework_tool && \
     rm -rf /tmp/framework_tool
 
@@ -355,7 +355,7 @@ RUN git clone --depth 1 --branch v0.12.0 https://github.com/hyprwm/hyprutils.git
     rm -rf /build/src/hyprutils
 
 # Build hyprwayland-scanner (code generator, needs pugixml)
-RUN git clone --depth 1 --branch v0.4.5 https://github.com/hyprwm/hyprwayland-scanner.git && \
+RUN git clone --depth 1 --branch v0.4.6 https://github.com/hyprwm/hyprwayland-scanner.git && \
     cd hyprwayland-scanner && \
     cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr -B build && \
     cmake --build build -j$(nproc) && \
@@ -374,7 +374,7 @@ RUN git clone --depth 1 --branch v0.6.8 https://github.com/hyprwm/hyprlang.git &
     rm -rf /build/src/hyprlang
 
 # Build hyprgraphics (graphics utilities, needs hyprutils)
-RUN git clone --depth 1 --branch v0.5.0 https://github.com/hyprwm/hyprgraphics.git && \
+RUN git clone --depth 1 --branch v0.5.1 https://github.com/hyprwm/hyprgraphics.git && \
     cd hyprgraphics && \
     cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr -B build && \
     cmake --build build -j$(nproc) && \
@@ -392,7 +392,7 @@ RUN git clone --depth 1 --branch v0.1.7 https://github.com/hyprwm/hypridle.git &
     rm -rf /build/src/hypridle
 
 # Build hyprlock (screen locker)
-RUN git clone --depth 1 --branch v0.9.3 https://github.com/hyprwm/hyprlock.git && \
+RUN git clone --depth 1 --branch v0.9.5 https://github.com/hyprwm/hyprlock.git && \
     cd hyprlock && \
     cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr -B build && \
     cmake --build build -j$(nproc) && \
@@ -418,7 +418,7 @@ RUN git clone --depth 1 https://github.com/Fausto-Korpsvart/Kanagawa-GKT-Theme.g
 # =============================================================================
 FROM ${UBLUE_IMAGE}:${FEDORA_VERSION}
 
-ARG FEDORA_VERSION=43
+ARG FEDORA_VERSION=44
 
 # Copy build context
 COPY --from=ctx /files/ /tmp/files/
