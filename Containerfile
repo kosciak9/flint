@@ -199,16 +199,18 @@ RUN --mount=type=cache,target=/var/cache/dnf \
     cmake ninja-build \
     qt6-qtbase-devel qt6-qtbase-private-devel \
     qt6-qtdeclarative-devel qt6-qtsvg-devel qt6-qt5compat-devel qt6-qtwayland-devel \
+    qt6-qtshadertools-devel \
     qtkeychain-qt6-devel rapidfuzz-cpp-devel \
     openssl-devel protobuf-devel protobuf-compiler libqalculate-devel \
     layer-shell-qt-devel abseil-cpp-devel \
-    wayland-devel libxkbcommon-devel libX11-devel libxcb-devel \
+    wayland-devel libxkbcommon-devel libX11-devel libxcb-devel xcb-util-keysyms-devel \
     minizip-devel libxml2-devel \
     kf6-syntax-highlighting-devel \
+    systemd-devel \
     nodejs npm jq \
     && dnf clean all
 
-RUN git clone --depth 1 --branch v0.20.15 https://github.com/vicinaehq/vicinae.git && \
+RUN git clone --depth 1 --branch v0.22.3 https://github.com/vicinaehq/vicinae.git && \
     cd vicinae && \
     mkdir build && cd build && \
     cmake -G Ninja \
@@ -228,7 +230,7 @@ RUN --mount=type=cache,target=/var/cache/dnf \
 
 RUN --mount=type=cache,target=/root/.cargo/registry \
     --mount=type=cache,target=/root/.cargo/git \
-    git clone --depth 1 --branch v1.25.1 https://github.com/starship/starship.git && \
+    git clone --depth 1 --branch v1.26.0 https://github.com/starship/starship.git && \
     cd starship && \
     cargo build --release && \
     install -Dm755 target/release/starship /build/out/bin/starship && \
@@ -242,7 +244,7 @@ RUN --mount=type=cache,target=/root/.cargo/registry \
 # -----------------------------------------------------------------------------
 RUN --mount=type=cache,target=/root/.cargo/registry \
     --mount=type=cache,target=/root/.cargo/git \
-    cargo install framework_tool --version 0.6.4 --root /tmp/framework_tool && \
+    cargo install framework_tool --version 0.6.5 --root /tmp/framework_tool && \
     install -Dm755 /tmp/framework_tool/bin/framework_tool /build/out/bin/framework_tool && \
     rm -rf /tmp/framework_tool
 
@@ -346,7 +348,7 @@ RUN git clone --depth 1 --branch v0.7.0 https://github.com/hyprwm/hyprland-proto
     rm -rf /build/src/hyprland-protocols
 
 # Build hyprutils (base library, no hypr deps)
-RUN git clone --depth 1 --branch v0.12.0 https://github.com/hyprwm/hyprutils.git && \
+RUN git clone --depth 1 --branch v0.13.1 https://github.com/hyprwm/hyprutils.git && \
     cd hyprutils && \
     cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr -B build && \
     cmake --build build -j$(nproc) && \
@@ -467,9 +469,9 @@ RUN --mount=type=bind,from=builder,src=/build/out,dst=/tmp/builder-out \
         # AGS runtime (GTK4 + layer shell)
         gtk4 gtk4-layer-shell gtk3 gtk-layer-shell gjs \
         # Vicinae runtime (v0.20+ uses QtQuick/QML instead of QWidgets)
-        qt6-qtbase qt6-qtdeclarative qt6-qtsvg qt6-qt5compat qt6-qtwayland qtkeychain-qt6 nodejs \
+        qt6-qtbase qt6-qtdeclarative qt6-qtsvg qt6-qt5compat qt6-qtwayland qt6-qtshadertools qtkeychain-qt6 nodejs \
         layer-shell-qt abseil-cpp libqalculate protobuf minizip \
-        libxml2 kf6-syntax-highlighting \
+        libxml2 kf6-syntax-highlighting xcb-util-keysyms \
         # Wayland text input
         wtype \
         # GPG/Keyring integration
@@ -510,6 +512,11 @@ RUN --mount=type=bind,from=builder,src=/build/out,dst=/tmp/builder-out \
     # Copy vicinae server helper binary
     mkdir -p /usr/libexec/vicinae && \
     cp -r /tmp/builder-out/usr/libexec/vicinae/* /usr/libexec/vicinae/ 2>/dev/null || true && \
+    # Vicinae snippets/input server needs cap_dac_override for paste expansion
+    if [ -x /usr/libexec/vicinae/vicinae-input-server ]; then setcap cap_dac_override=+ep /usr/libexec/vicinae/vicinae-input-server; fi && \
+    # Copy Vicinae modules-load config (loads uinput for snippets/input server)
+    mkdir -p /usr/lib/modules-load.d && \
+    cp -r /tmp/builder-out/usr/lib/modules-load.d/* /usr/lib/modules-load.d/ 2>/dev/null || true && \
     # Copy udev rules (power profile switching on AC/battery)
     mkdir -p /usr/lib/udev/rules.d && \
     cp -r /tmp/files/usr/lib/udev/rules.d/* /usr/lib/udev/rules.d/ 2>/dev/null || true && \
